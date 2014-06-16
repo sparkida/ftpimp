@@ -1,0 +1,35 @@
+{
+	"name": "ftpimp",
+	"version": "0.3.46",
+	"preferGlobal": true,
+    "license": "MIT",
+    "homepage": "http://ftpimp.net",
+	"description": "FTP Improved - A better FTP API, built for NodeJS.",
+	"main": "./ftpimp-app",
+	"directories": {
+		"lib": "./lib"
+	},
+	"scripts": {
+		"start": "node ./tests/ftp",
+		"test": "./inspect -f && node --debug ./tests/ftp"
+	},
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/sparkida/ftpimp"
+	},
+	"keywords": [
+		"ftp",
+        "improved"
+	],
+	"dependencies": {
+        "colors": "*"
+	},
+	"engine": {
+		"node": ">=0.8.x"
+	},
+    "author": {
+        "name": "Nicholas Riley",
+        "email": "nick@sparkida.com",
+        "url": "http://sparkida.com"
+    }
+}

@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+truncate -s 0 ~/ftpimp/log
+clear
+tail -f ~/ftpimp/log

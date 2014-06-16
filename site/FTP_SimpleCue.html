@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Class: SimpleCue</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Class: SimpleCue</h1>
+
+    
+
+
+
+<section>
+
+<header>
+    <h2>
+        <span class="ancestors"><a href="FTP.html">FTP</a>#</span>
+    
+    SimpleCue
+    </h2>
+    
+</header>
+
+<article>
+    <div class="container-overview">
+    
+
+    
+        
+<dt>
+    <h4 class="name" id="SimpleCue"><span class="type-signature"></span>new SimpleCue<span class="signature">(command)</span><span class="type-signature"> &rarr; {function}</span></h4>
+
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        Provides a factory to create a simple cue procedure. Look
+at the example below to see how we override the callback
+function to perform additional actions before exiting
+the cue and loading the next one.<br>
+Functions created with this provide a synchronized cue
+that is asynchronous in itself, so items will be processed
+in the order they are received, but this will happen
+immediately. Meaning, if you make a dozen sequential calls
+to <a href="FTP.html#filemtime">FTP#filemtime</a> they will all be read immediately,
+cued in order, and then processed one after the other.
+    </div>
+    
+
+    
+
+    
+
+    
+        <h5>Parameters:</h5>
+        
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>command</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">The command that will be issued ie: <b>"CWD foo"</b></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+    
+
+    
+<dl class="details">
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="ftpimp-app.js.html">ftpimp-app.js</a>, <a href="ftpimp-app.js.html#line353">line 353</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <h5>Returns:</h5>
+    
+            
+<div class="param-desc">
+    cueManager - The simple cue manager
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">function</span>
+
+
+    </dd>
+</dl>
+
+        
+
+    
+        <h5>Example</h5>
+        
+    <pre class="prettyprint"><code>//the current implementation of FTP.rename is preferred,
+//this is merely being used as an example
+var myCustomRename = (function () {
+    var myCueManager = ftp.SimpleCue.create('RNFR');
+    return function (pathArray, callback) {
+        var from = pathArray[0],
+            to = pathArray[1];
+        //override the callback, SimpleCue's expect the
+        //first parameter to be a string
+        myCueManager(from, function (err, data) {
+            if (err) {
+                console.log(err);
+            } else {
+                //provide custom function and trigger callback when done
+                ftp.raw('RNTO ' + to, callback);
+            }
+        });
+    }
+}());</code></pre>
+
+    
+</dd>
+
+    
+    </div>
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+        <h3 class="subsection-title">Methods</h3>
+
+        <dl>
+            
+<dt>
+    <h4 class="name" id="create"><span class="type-signature">&lt;static> </span>create<span class="signature">(command)</span><span class="type-signature"></span></h4>
+
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        Create a new <a href="FTP_SimpleCue.html">FTP#SimpleCue</a> instance for the command type.
+    </div>
+    
+
+    
+
+    
+
+    
+        <h5>Parameters:</h5>
+        
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>command</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">The command that will be issued, no parameters, ie: <b>"CWD"</b></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+    
+
+    
+<dl class="details">
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="ftpimp-app.js.html">ftpimp-app.js</a>, <a href="ftpimp-app.js.html#line448">line 448</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dd>
+
+        
+            
+<dt>
+    <h4 class="name" id="registerHook"><span class="type-signature">&lt;static> </span>registerHook<span class="signature">(command, callback)</span><span class="type-signature"></span></h4>
+
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        Register a data hook function to intercept received data
+on the command (parameter 1)
+    </div>
+    
+
+    
+
+    
+
+    
+        <h5>Parameters:</h5>
+        
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>command</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">The command that will be issued, no parameters, ie: <b>"CWD"</b></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>callback</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">function</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">The callback function to be issued.</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+    
+
+    
+<dl class="details">
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="ftpimp-app.js.html">ftpimp-app.js</a>, <a href="ftpimp-app.js.html#line459">line 459</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dd>
+
+        
+            
+<dt>
+    <h4 class="name" id="cueManager"><span class="type-signature">&lt;inner> </span>cueManager<span class="signature">(filepath, callback)</span><span class="type-signature"></span></h4>
+
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        The cue manager returned when creating a new <a href="FTP_SimpleCue.html">FTP#SimpleCue</a> object
+    </div>
+    
+
+    
+
+    
+
+    
+        <h5>Parameters:</h5>
+        
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>filepath</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">The location of the remote file to process the set command.</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>callback</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">function</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">The callback function to be issued.</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+    
+
+    
+<dl class="details">
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="ftpimp-app.js.html">ftpimp-app.js</a>, <a href="ftpimp-app.js.html#line432">line 432</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dd>
+
+        </dl>
+    
+
+    
+
+    
+</article>
+
+</section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Index</a></h2><h3>Modules</h3><ul><li><a href="module-ftpimp.html">ftpimp</a></li><li><a href="command.html">lib/command</a></li></ul><h3>Classes</h3><ul><li><a href="CMD.html">CMD</a></li><li><a href="FTP.html">FTP</a></li><li><a href="FTP_Events.html">Events</a></li><li><a href="FTP_Handle.html">Handle</a></li><li><a href="FTP_SimpleCue.html">SimpleCue</a></li><li><a href="FTP_StatObject.html">StatObject</a></li></ul><h3>Events</h3><ul><li><a href="FTP_Events.html#event:fileCueEmpty">fileCueEmpty</a></li><li><a href="FTP_Events.html#event:fileTransferComplete">fileTransferComplete</a></li><li><a href="FTP.html#socket#event:error">error</a></li><li><a href="FTP.html#socket#event:ready">ready</a></li></ul><h3>Namespaces</h3><ul><li><a href="FTP.html#socket">socket</a></li></ul>
+</nav>
+
+<br clear="both">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.3.0-alpha5</a> on Mon Jun 16 2014 09:03:57 GMT-0700 (PDT)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>
