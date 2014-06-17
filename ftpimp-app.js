@@ -1225,8 +1225,8 @@ proto.lsnames = SimpleCue.create('NLST');
 
 /**
  * Runs the FTP command SIZE - Name list of remote directory.
- * @function FTP#lsnames
- * @param {string} dirpath - The location of the remote directory to list.
+ * @function FTP#size
+ * @param {string} filepath - The location of the file to retrieve size from.
  * @param {function} callback - The callback function to be issued.
  */
 proto.size = SimpleCue.create('SIZE');
