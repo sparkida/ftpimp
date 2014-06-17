@@ -1,6 +1,6 @@
 {
 	"name": "ftpimp",
-	"version": "0.3.46",
+	"version": "0.3.62",
 	"preferGlobal": true,
     "license": "MIT",
     "homepage": "http://ftpimp.net",
@@ -19,7 +19,12 @@
 	},
 	"keywords": [
 		"ftp",
-        "improved"
+        "client",
+        "file",
+        "transfer",
+        "upload",
+        "mget",
+        "mput"
 	],
 	"dependencies": {
         "colors": "*"

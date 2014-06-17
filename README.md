@@ -20,7 +20,8 @@ var FTP = require('ftpimp'),
         host: 'localhost',
         port: 21,
         user: 'root',
-        pass: ''
+        pass: '',
+        debug: false
     }),
     connected = function () {
         console.log('connected to remote FTP server');

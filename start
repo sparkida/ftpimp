@@ -1,4 +1,27 @@
 #!/usr/bin/env bash
-truncate -s 0 ~/ftpimp/log
-clear
-tail -f ~/ftpimp/log
+
+WatchPulse()
+{
+	WatchIgnore=($(cat ./.watchignore))
+	inotifywait -mr --timefmt '%d/%m/%y %H:%M' --format '%T %w %f' \
+	-e close_write . | while read date time dir file; do
+		updateFile=${file}
+		WatchCompare=(${WatchIgnore[@]##"$updateFile"})
+		if [ ${#WatchCompare[@]} -ne ${#WatchIgnore[@]} ];then
+			#echo skipping $updateFile
+			continue
+		fi
+		#convert absolute path to relative
+		#updateFileREL=`echo "$FILECHANGE" | sed 's_'$curPath'/__'`
+        local log=~/ftpimp/log
+        truncate -s 0 $log
+        touch $log
+        clear
+        pkill node
+		echo -e "${time}::\033[0;33mFile updated: $updateFile\033[0;m"
+        node ~/ftpimp/test/ftp <$log &>$log &
+	done
+}
+
+WatchPulse
+

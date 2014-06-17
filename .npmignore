@@ -1,7 +1,12 @@
+node_modules
 watch
 watchdoc
 start
+test
 site
 log
 config.json
 .git
+.gitignore
+.npmignore
+.watchignore
