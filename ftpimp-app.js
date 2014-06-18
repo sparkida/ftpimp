@@ -537,8 +537,8 @@ handle.data = function (data) {//{{{
         code = strData[i].substr(0, 3);
         //make sure its a number and not yet stored
         if (code.search(/^[0-9]{3}/) > -1) {
-            commandCodes.push(code);
-            if (commandCodes.indexOf(code) === -1) {
+            if (commandCodes.indexOf(code) < 0) {
+                commandCodes.push(code);
                 commandData[code] = strData[i].substr(3);
             } else {
                 commandData[code] += strData[i].substr(3);

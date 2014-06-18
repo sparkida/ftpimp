@@ -1,3 +1,4 @@
+
 FTPimp
 ======
 An improved implementation of the FTP service API for NodeJS.
@@ -6,6 +7,14 @@ certain functions like get, put, save, rmdir already exist,
 and I will continue adding / improving them. For the next few
 updates I will be more focused on the control of the connection,
 things like KeepAlive and cue rescheduling option on failure.
+
+
+Updates
+-------
+* Jun 18, 2014 4:35(PDT) - Fixed an issue with performing multiple data requests
+* Jun 18, 2014 10:35(PDT) - Fixed an issue with the response handler failing at login 
+
+
 
 
 API Documentation
