@@ -221,6 +221,7 @@ cmdProto.transferComplete = function (data) {//{{{
  */
 cmdProto.dataPortReady = function (data) {//{{{
     ftp.cueDataTransfer = true;
+    //ftp.events.emit('dataPortReady');
 };//}}}
 
 
@@ -300,6 +301,7 @@ cmdProto.startPassive = function (data) {//{{{
     dbg(data);
     var matches = data.match(/(([0-9]{1,3},){4})([0-9]{1,3}),([0-9]{1,3})/),
         port;
+    dbg(matches);
     port = ftp.config.pasvPort = Number(matches[3]*256) + Number(matches[4]);
     ftp.config.pasvString = matches[0];
 };//}}}
@@ -375,9 +377,10 @@ proto.run = function (command, callback, runNow) {//{{{
     var callbackConstruct = function () {
         ftp.socket.write(command + '\n', function () {
             //create new function dreference on cue
-            dbg('>loading command: ' + command);
+            dbg('>command issued: ' + command);
+            dbg('>attaching handler');
             var dataHandler = function (data) {
-                   //dbg('>receiving: ' + data);
+                   dbg(('>handler receiving: ' + data).cyan);
                     var strData = data.toString().trim( ),
                         commandCode = strData.match(/^([0-9]{1,3})/m)[0],
                         args = command.split(' ', 1),
@@ -655,6 +658,9 @@ handle.connected = function () {//{{{
     process.once('SIGINT', ftp.exit);
     //process.once('uncaughtException', handle.uncaughtException);
     ftp.socket.on('data', ftp.handle.data);
+    ftp.socket.on('data', function (data) {
+        dbg(data.toString().green);
+    });
 };//}}}
 
 
@@ -762,6 +768,8 @@ proto.openDataPort = function (callback) {//{{{
         .split('.')
         .join(',');
 
+        
+    //ftp.events.once('dataPortReady', callback);
     //ftp.cue.processing = false;
     ftp.pasv(pasvCmd, function (err, data) {
         if (err) {
@@ -769,13 +777,18 @@ proto.openDataPort = function (callback) {//{{{
             dbg(err);
             return;
         }
-        dbg('opening passive connection'.cyan);
+
+        //ftp.events.on('dataPortReady', callback);
         ftp.pipe = net.createConnection(
             ftp.config.pasvPort,
             ftp.socket.remoteAddress);
-        ftp.pipe.on('data', function (data) {
-            dbg(data.toString().green);
-        });
+        //trigger callback once the server has confirmed the port is open
+        /*if (ftp.config.debug) {
+            ftp.pipe.on('data', function (data) {
+                dbg(data.toString().green);
+            });
+        }*/
+        
         ftp.pipe.once('connect', function () {
             dbg('passive connection established'.green);
             callback();
@@ -786,6 +799,7 @@ proto.openDataPort = function (callback) {//{{{
         ftp.pipe.once('error', function (err) {
             dbg(('pipe error: ' + err.errno).red);
         });
+        
     });
 };//}}}
 
