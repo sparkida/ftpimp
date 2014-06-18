@@ -1,12 +1,23 @@
 FTPimp
 ======
 An improved implementation of the FTP service API for NodeJS.
+I'm in the process of adding automation to this FTP module,
+certain functions like get, put, save, rmdir already exist,
+and I will continue adding / improving them. For the next few
+updates I will be more focused on the control of the connection,
+things like KeepAlive and cue rescheduling option on failure.
 
 
 API Documentation
 -----------------
-For a full breakdown of this API, including examples and
-tutorials: [FTPimp.net](http://ftpimp.net)
+For a full breakdown of this API, including examples: [FTPimp.net](http://ftpimp.net)
+Keep checking back, and don't forget to update to the newest version!
+
+
+Find a Bug?
+-----------
+Please let me know so that I can fix it ASAP, cheers.
+[Report a Bug](https://github.com/sparkida/ftpimp/issues)
 
 
 
@@ -34,6 +45,17 @@ ftp.events.once('ready', connected);
 
 Examples
 --------
+
+### Recursively delete a directory
+```
+var recursive = true;
+ftp.rmdir('foo', function (err,data) {
+    if (!err) {
+        console.log('entire directory deleted');
+    }
+}, recursive);
+
+```
 
 ### Get the size of a remote file
 ```
