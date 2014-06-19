@@ -2,6 +2,9 @@
 FTPimp
 ======
 An improved implementation of the FTP service API for NodeJS.
+**Be sure to update as we our in Beta** and for the next week or
+so every update will address important fixes.
+
 I'm in the process of adding automation to this FTP module,
 certain functions like get, put, save, rmdir already exist,
 and I will continue adding / improving them. For the next few
@@ -11,13 +14,12 @@ things like KeepAlive and cue rescheduling option on failure.
 
 Updates
 -------
-* Jun 19, 2014 1:35pm(PDT) - **Major Update** <span style="color: #F33">Beta v0.4.0</span> - <span style="font-weight: bold; color: green">stable</span>
+* Jun 19, 2014 4:15pm(PDT) - Fixed an issue that occured when 0 bytes are received in data transfers
+* Jun 19, 2014 1:35pm(PDT) - **Major Update** Beta v0.4.0 **stable**
     - **FTP.connect has been replaced for FTP.create**
     - Resolved all known issues with the cueing of commands and data transfers. Good to Go!
 * Jun 18, 2014 4:35am(PDT) - Fixed an issue with performing multiple data requests
 * Jun 18, 2014 10:35am(PDT) - Fixed an issue with the response handler failing at login 
-
-
 
 
 API Documentation
@@ -30,7 +32,6 @@ Find a Bug?
 -----------
 Please let me know so that I can fix it ASAP, cheers.
 [Report a Bug](https://github.com/sparkida/ftpimp/issues)
-
 
 
 Quick Start

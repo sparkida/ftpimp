@@ -246,33 +246,19 @@ proto.run = function (command, callback, runNow) {//{{{
         if (method === 'PASV') {
             ftp.handle.waiting = true;
         }
-        var endTransfer = function () {
-                dbg('ending transfer --- should be no data'.red);
-                callback.call(callback, null, null);
-                ftp.events.emit('endproc');
-            },
-            pipeTransfer = function (data) {
-                data = data.toString();
-                dbg('----closing pipe-----'.red);
-                dbg(data);
-                ftp.pipe.removeListener(endTransfer);
-                ftp.pipe.once('end', function () {
-                    callback.call(callback, null, data);
-                    ftp.events.emit('endproc');
-                });
-            },
-            responseHandler = function (code, data) {
+        var responseHandler = function (code, data) {
                 dbg('---------response hanlder--------'.cyan);
                 if (code === '150' && method !== 'STOR') {
                     dbg('listening for pipe data'.red);
-                    if (ftp.pipeClosed) {
-                        dbg('pipe already closed'.yellow);
-                        ftp.pipeClose = false;
-                        endTransfer();
-                        return;
-                    }
-                    ftp.pipe.once('data', pipeTransfer);
-                    ftp.pipe.once('end', endTransfer);
+                    ftp.pipe.once('data', function (data) {
+                        data = data.toString();
+                        dbg('----closing pipe-----'.red);
+                        dbg(data);
+                        ftp.pipe.once('end', function () {
+                            callback.call(callback, null, data);
+                            ftp.events.emit('endproc');
+                        });
+                    });
                 } else {
                     callback.call(callback, null, data);
                     ftp.events.emit('endproc');
@@ -1262,9 +1248,6 @@ SimpleCue.registerHook('MDTM', function (data) {//{{{
 proto.filemtime = SimpleCue.create('MDTM');
 
 SimpleCue.registerHook('NLST', function (data) {//{{{
-    if (null === data) {
-        return [];
-    }
     var filter = function (elem) {
             return elem.length > 0 && elem !== '.' && elem !== '..';
         };
