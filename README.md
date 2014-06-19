@@ -11,8 +11,11 @@ things like KeepAlive and cue rescheduling option on failure.
 
 Updates
 -------
-* Jun 18, 2014 4:35(PDT) - Fixed an issue with performing multiple data requests
-* Jun 18, 2014 10:35(PDT) - Fixed an issue with the response handler failing at login 
+* Jun 19, 2014 1:35pm(PDT) - **Major Update** <span style="color: #F33">Beta v0.4.0</span> - <span style="font-weight: bold; color: green">stable</span>
+    - **FTP.connect has been replaced for FTP.create**
+    - Resolved all known issues with the cueing of commands and data transfers. Good to Go!
+* Jun 18, 2014 4:35am(PDT) - Fixed an issue with performing multiple data requests
+* Jun 18, 2014 10:35am(PDT) - Fixed an issue with the response handler failing at login 
 
 
 
@@ -36,7 +39,7 @@ Quick Start
 
 ```
 var FTP = require('ftpimp'),
-    ftp = FTP.connect({
+    ftp = FTP.create({
         host: 'localhost',
         port: 21,
         user: 'root',
@@ -46,7 +49,6 @@ var FTP = require('ftpimp'),
     connected = function () {
         console.log('connected to remote FTP server');
     };
-
     
 ftp.events.once('ready', connected);
 ```

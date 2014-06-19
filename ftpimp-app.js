@@ -28,6 +28,7 @@ var net = require('net'),//{{{
      * The main FTP API object
      * @constructor FTP
      * @param {null|object} config - The ftp connection settings (optional)
+     * @param {boolean} connect - Whether or not to start the connection automatically; default is true;
      * @todo The major functions have been added and this current version
      * is more stable and geared for asynchronous NodeJS. We will be implementing
      * the following commands shortly
@@ -41,13 +42,13 @@ var net = require('net'),//{{{
      * @todo Add FTP.help
      * @todo Add ability to opt into an active port connection for data transfers
      */
-    FTP = function (cfg) {
+    FTP = function (cfg, connect) {
+        connect = connect === undefined ? true : connect;
         ftp = this;
-        if (undefined !== cfg) {
+        if (undefined !== cfg && null !== cfg && cfg) {
             var n;
             for (n in cfg) {
                 if (cfg.hasOwnProperty(n)) {
-                    //TODO document this option
                     ftp.config[n] = cfg[n];
                 }
             }
@@ -56,8 +57,13 @@ var net = require('net'),//{{{
                     console.log(msg);
                 };
             }
-            cmd = ftp.cmd = CMD.create(ftp);
-            ftp.init();
+        }
+
+        //set new handler
+        cmd = ftp.cmd = CMD.create(ftp);
+        ftp.handle = ftp.Handle.create();
+        if (connect) {
+            ftp.connect();
         }
     },//}}}
     proto = FTP.prototype = {//{{{
@@ -76,6 +82,12 @@ var net = require('net'),//{{{
          */
         pipeAborted: false,
         /** 
+         * Set by the ftp.openDataPort method to tell the process that the pipe has been closed
+         * @type {object} 
+         * @alias FTP#pipeClosed
+         */
+        pipeClosed: false,
+        /** 
          * Set by the ftp.put method while the pipe is connecting and while connected
          * @type {object}
          * @alias FTP#pipeActive
@@ -91,8 +103,14 @@ var net = require('net'),//{{{
          * The FTP log in information.
          * @type {string} 
          * @alias FTP#config
-         */
-        config: {},
+        */
+        config: {
+            host: 'localhost',
+            port: 21,
+            user: 'root',
+            pass: '',
+            debug: false
+        },
         /** 
          * Current working directory.
          * @type {string}
@@ -125,13 +143,17 @@ var net = require('net'),//{{{
         dataTransferHook: {}
     };//}}}
 
-proto.config = {
-    host: 'localhost',
-    port: 21,
-    user: 'root',
-    pass: '',
-    debug: false
-};
+
+/**
+ * Initializes the main FTP sequence
+ * ftp.events will emit a ready event once
+ * the server connection has been established
+ * @function FTP.create
+ * @param {null|object} config - The ftp connection settings (optional)
+ * @param {boolean} connect - Whether or not to start the connection automatically; default is true;
+ */
+FTP.create = function (cfg, connect) {return new FTP(cfg, connect);};
+
 
 /** @constructor FTP#Handle */
 proto.Handle = function () {};
@@ -145,17 +167,9 @@ proto.Handle = function () {};
 proto.Handle.create = function () {return new proto.Handle();};
 handle = proto.Handle.prototype;
 
-/**
- * Initializes the main FTP sequence
- * ftp.events will emit a ready event once
- * the server connection has been established
- * @function FTP.connect
- */
-FTP.connect = function (cfg) {return new FTP(cfg);};
 
 //create new event handler
 util.inherits(Events, EventEmitter);
-
 proto.events = new Events();
 
 
@@ -183,16 +197,14 @@ proto.events = new Events();
  * MyFTP.prototype.init = function () {
  *     dbg('Initializing!');
  *     ftp.handle = ftp.Handle.create();
- *     ftp.createSocket();
+ *     ftp.connect();
  * };
  * //start new MyFTP instance
  * ftp = new MyFTP(config);
  */
 proto.init = function () {//{{{
-    //set new handler
-    ftp.handle = ftp.Handle.create();
     //create a new socket and login
-    ftp.createSocket();
+    ftp.connect();
 };//}}}
 
 
@@ -217,8 +229,10 @@ proto.init = function () {//{{{
  * and write the file
  */
 proto.run = function (command, callback, runNow) {//{{{
-    var callbackConstruct;
-    dbg('cueing: ' + command);
+    var callbackConstruct,
+        dataHandler,
+        method = command.split(' ', 1)[0];
+    dbg('run: ' + command);
     if (undefined === command) { //TODO || cmd.allowed.indexOf(command.toLowerCase) {
         throw new Error('ftp.run > parameter 1 expected command{string}');
     }
@@ -226,94 +240,34 @@ proto.run = function (command, callback, runNow) {//{{{
         throw new Error('ftp.run > parameter 2 expected a callback function');
     }
     runNow = runNow === undefined ? false : runNow;
-    var callbackConstruct = function () {
-        ftp.socket.write(command + '\n', function () {
-            //create new function dreference on cue
-            dbg('>command issued: ' + command);
-            dbg('>attaching handler');
-            var dataHandler = function (data) {
-                   dbg(('>handler receiving: ' + data).cyan);
-                    var strData = data.toString().trim( ),
-                        commandCode = strData.match(/^([0-9]{1,3})/m)[0],
-                        args = command.split(' ', 1),
-                        method = args[0];
-
-                    dbg('-=============================-');
-                    dbg('method: ' + commandCode + ' ' + method);
-                    dbg(commandCode + ':' + command);
-                    dbg(strData);
-                    dbg('-=============================-');
-                    //if error free, remove listener
-                    //ftp.socket.removeListener('error', errorHandler);
-                    strData = strData.split(commandCode).join('').trim();
-                    if (commandCode === '150') {
-                        if (method !== 'STOR') {
-                            dbg('wait ...' + method);
-                            ftp.pipe.once('data', function (data) {
-                                dbg('recv --------> ' + data.toString());
-                                dbg(method);
-                                dbg(ftp.dataTransferTypes);
-                                if (ftp.dataTransferTypes.indexOf(method) > -1) {
-                                    dbg('----pipe closing-----'.red);
-                                    //ftp.events.emit('fileTransferComplete');
-                                    callback.call(callback, null, data.toString());
-                                    ftp.events.emit('endproc');
-                                } else {
-                                    dbg('----pipe closing2-----'.red);
-                                    ftp.events.emit('endproc');
-                                }
-                            });
-                        } else {
-                            //we need to capture the next bit of data
-                            dbg('recursing dataHandler...');
-                            ftp.socket.once('data', dataHandler);
-                        }
-                        return;
-                    } else {
-                        dbg(('- PROCESSING - ' + commandCode).yellow);
-                        dbg('Open Pipes: ' + ftp.openPipes);
-                        dbg('Total Pipes: ' + ftp.totalPipes);
-                        //directory created?
-                        if (commandCode === '257') {
-                            var args = strData.split(' : ');
-                            strData = args[0];
-                        }
-                        else if (commandCode === '550') {
-                            dbg('running callback');
-                            callback.call(callback, strData);
+    callbackConstruct = function () {
+        dbg('>Run callbackConstruct'.yellow);
+        dbg('command sent: ' + command);
+        if (method === 'PASV') {
+            ftp.handle.waiting = true;
+        }
+        var responseHandler = function (code, data) {
+                dbg('---------response hanlder--------'.cyan);
+                if (code === '150' && method !== 'STOR') {
+                    dbg('listening for pipe data'.red);
+                    ftp.pipe.once('data', function (data) {
+                        data = data.toString();
+                        dbg('----closing pipe-----'.red);
+                        dbg(data);
+                        ftp.pipe.once('end', function () {
+                            callback.call(callback, null, data);
                             ftp.events.emit('endproc');
-                            return;
-                        }
-                        else if (commandCode === '226') {
-                            if (method === 'DELE') {
-                                //we need to capture the next bit of data
-                                dbg('recursing dataHandler2...');
-                                var errorHandler = function (sockData) {
-                                        dbg('file action error ---- '.red);
-                                        ftp.events.removeListener('fileActionComplete', complete);
-                                        callback.call(callback, sockData);
-                                    },
-                                    complete = function (sockData) {
-                                        dbg('file action completed ---- '.green);
-                                        ftp.events.removeListener('tranferError', errorHandler);
-                                        callback.call(callback, null, sockData);
-                                        ftp.events.emit('endproc');
-                                    };
-                                ftp.events.once('transferError', errorHandler);
-                                ftp.events.once('fileActionComplete', complete);
-                                return;
-                            }
-                            dbg('running callback: ' + method);
-                            callback.call(callback, null, strData);
-                            return;
-                        }
-                        callback.call(callback, null, strData);
-                        ftp.events.emit('endproc');
-                    }
-                };
-            //receive data once
-            ftp.socket.once('data', dataHandler);
-        });
+                        });
+                    });
+                } else {
+                    callback.call(callback, null, data);
+                    ftp.events.emit('endproc');
+                }
+            };
+
+        ftp.events.once('response', responseHandler);
+        ftp.handle.data.waiting = true;
+        ftp.socket.write(command + '\n');
     };
     runNow ? callbackConstruct() : ftp.cue.register(callbackConstruct);
 };//}}}
@@ -365,7 +319,6 @@ proto.cue = {//{{{
     }
 };
 proto.events.on('endproc', proto.cue.run);//}}}
-
 
 
 /**
@@ -424,21 +377,21 @@ proto.SimpleCue = SimpleCue = (function (command) {//{{{
             cur = cue[curId];
             cue[curId] = null;
             delete cue[curId];
-            ftp.openDataPort(function () {
-                ftp.events.once('dataTransferComplete', runCue);
-                hook = undefined === that[command + 'Hook'] ? null : that[command + 'Hook'];
-                dbg('hook: ' + hook);
-                //hook data into custom instance function
-                if (null === hook || typeof hook !== 'function') {
-                    ftp.run(command + ' ' + cur.filepath, cur.callback);                
-                } else {
-                    ftp.run(command + ' ' + cur.filepath, function (err, data) {
-                        dbg('callback 2 --'.blue);
-                        cur.callback.call(cur.callback, err, hook(data));
-                    });
-                }
-            });
-            
+            var portHandler = function () {
+                    ftp.events.once('dataTransferComplete', runCue);
+                    hook = undefined === that[command + 'Hook'] ? null : that[command + 'Hook'];
+                    dbg('hook: ' + hook);
+                    //hook data into custom instance function
+                    if (null === hook || typeof hook !== 'function') {
+                        ftp.run(command + ' ' + cur.filepath, cur.callback);                
+                    } else {
+                        ftp.run(command + ' ' + cur.filepath, function (err, data) {
+                            dbg('callback 2 --'.blue);
+                            cur.callback.call(cur.callback, err, hook(data));
+                        });
+                    }
+                };
+            ftp.openDataPort(portHandler);
         },
         /** 
          * The cue manager returned when creating a new {@link FTP#SimpleCue} object
@@ -500,9 +453,6 @@ handle.connected = function () {//{{{
     process.once('SIGINT', ftp.exit);
     ftp.config.pasvAddress = ftp.socket.remoteAddress.split('.').join(',');
     ftp.socket.on('data', ftp.handle.data);
-    ftp.socket.on('data', function (data) {
-        dbg(data.toString().green);
-    });
     //process.once('uncaughtException', handle.uncaughtException);
 };//}}}
 
@@ -524,16 +474,56 @@ handle.uncaughtException = function (err) {//{{{
  * @function FTP#Handle#data
  */
 handle.data = function (data) {//{{{
-    var strData = data.toString().trim().split('\n'),
-        strParts = strData.length,
+    var strData = data.toString().trim(),
+        strParts,
         commandCodes = [],
         commandData = {},
         curCommand,
         cmdName,
         code,
-        i = 0;
+        i,
+        end = function () {
+            dbg('----handle waiting ? end');
+            dbg(handle.data.waiting);
+            if (handle.data.waiting) {
+                dbg('handle.data.waiting:: ' + code + ' ' + strData);
+                if ( ! handle.data.start) {
+                    dbg(1111);
+                    handle.data.waiting = false;
+                    /*if (code === '150') {
+                        dbg('holding for data transfer'.yellow);
+                    } else {*/
+                        ftp.events.emit('response', code, strData);
+                    //}
+                } else {
+                    dbg(2222);
+                    handle.data.waiting = true;
+                    handle.data.start = false;
+                }
+            }
+        },
+        run = function () {
+            if (undefined !== cmd.keys[code]) {
+                if (code === '227') {
+                    ftp.events.once('commandComplete', end);
+                }
+                cmdName = cmd.keys[code];        
+                dbg('>executing command: ' + cmdName);
+                cmd[cmdName](strData);
+                //only open once per ftp instance
+            }
+            //we will handle data transfer codes with the openDataPort
+            if (code !== '227' && code !== '226') {
+                end();
+            }
+        };
 
-    for (i; i < strParts; i++) {
+    dbg(('\n>>>\n' + strData + '\n>>>\n').grey);
+    strData = strData.split('\n');
+    strParts = strData.length;
+    
+
+    for (i = 0; i < strParts; i++) {
         code = strData[i].substr(0, 3);
         //make sure its a number and not yet stored
         if (code.search(/^[0-9]{3}/) > -1) {
@@ -545,22 +535,26 @@ handle.data = function (data) {//{{{
             }
         }
     } 
-
+    dbg(commandCodes.join(', ').grey);
     for (i = 0; i < commandCodes.length; i++) {
         code = commandCodes[i];
         strData = commandData[code];
         dbg('------------------');
         dbg('CODE  -> ' + code);
-        dbg('DATA -> ' + strData);
+        dbg('DATA -> ');
+        dbg(strData);
         dbg('------------------');
-        if (undefined !== cmd.keys[code]) {
-            cmdName = cmd.keys[code];        
-            dbg('>command: ' + cmdName);
-            cmd[cmdName](strData);
-            //only open once per ftp instance
-        }
+        run();
     }
 };//}}}
+
+
+/** 
+ * Waiting for response from server
+ * @property FTP#Handle#data.waiting 
+ */
+handle.data.waiting = true;
+handle.data.start = true;
 
 
 /**
@@ -584,9 +578,9 @@ proto.exit = function (sig) {//{{{
 /**
  * Creates a new socket connection for sending commands
  * to the ftp server 
- * @function FTP#createSocket
+ * @function FTP#connect
  */
-proto.createSocket = function () {//{{{
+proto.connect = function () {//{{{
     /**
      * Holds the connected socket object
      * @namespace FTP#socket
@@ -617,6 +611,9 @@ proto.openDataPort = function (callback) {//{{{
                 dbg(err);
                 return;
             }
+            dbg('opening data port...'.cyan);
+            dbg(ftp.socket.remoteAddress);
+            dbg(ftp.config.pasvPort);
             //ftp.events.on('dataPortReady', callback);
             ftp.pipe = net.createConnection(
                 ftp.config.pasvPort,
@@ -628,6 +625,7 @@ proto.openDataPort = function (callback) {//{{{
             });
             ftp.pipe.once('end', function () {
                 dbg('----> pipe end ----');
+                ftp.pipeClosed = true;
                 ftp.openPipes -= 1;
             });
             /*if (ftp.config.debug) {
@@ -696,23 +694,9 @@ proto.put = (function () {//{{{
                     return;
                 }
                 //write file data to remote data socket
-                ftp.events.once('fileTransferComplete', function () {
-                    ftp.pipeActive = running = false;
-                    if(checkAborted()) {
-                        dbg(2);
-                        return;
-                    }
-                    if ( ! cueIndex.length) {
-                        /**
-                         * Fired when the last open pipe in the {@link FTP#cue} has been closed
-                         * @event FTP#Events#fileCueEmpty
-                         */
-                        ftp.events.emit('fileCueEmpty');
-                    } else {
-                        runCue();
-                    }
-                });
                 ftp.pipe.end(filedata, function () {
+                    dbg('----saving remote file----'.cyan);
+                    ftp.pipeActive = running = false;
                     if (checkAborted()) {
                         dbg(3);
                         return;
@@ -720,8 +704,26 @@ proto.put = (function () {//{{{
                     dbg('---data piped--- running STOR');
                     cue[curId] = null;
                     delete cue[curId];
+                    ftp.events.once('dataTransferComplete', function () {
+
+                        if ( ! cueIndex.length) {
+                            /**
+                             * Fired when the last open pipe in the {@link FTP#cue} has been closed
+                             * @event FTP#Events#fileCueEmpty
+                             */
+                            ftp.events.emit('fileCueEmpty');
+                        } else {
+                            dbg('running cue'.yellow);
+                            runCue();
+                        }
+                    });
                     //send command through command socket to stor file
-                    ftp.run('STOR ' + remotePath, callback, true);
+                    ftp.run('STOR ' + remotePath, function () {
+                        dbg('-----exec callback'.green);
+                        callback.call(callback, null, remotePath);
+                    }, true);
+                    //ftp.events.emit('endproc');
+                    //runCue();
 
                 });
             });
@@ -1186,6 +1188,13 @@ StatObject.values = {//{{{
 
 
 SimpleCue.registerHook('LIST', function (data) {//{{{
+    if (null === data) {
+        return [];
+    }
+
+    dbg(data.red);
+    dbg('#############################');
+
     data = data.split('\r\n').filter(Boolean);
     var i = 0,
         cur,
