@@ -1,0 +1,141 @@
+0 info it worked if it ends with ok
+1 verbose cli [ '/usr/local/bin/node', '/usr/local/bin/npm', 'publish', '-f' ]
+2 info using npm@1.4.3
+3 info using node@v0.10.26
+4 warn using --force I sure hope you know what you are doing.
+5 verbose publish [ '.' ]
+6 verbose cache add [ '.', null ]
+7 verbose cache add name=undefined spec="." args=[".",null]
+8 verbose parsed url { protocol: null,
+8 verbose parsed url   slashes: null,
+8 verbose parsed url   auth: null,
+8 verbose parsed url   host: null,
+8 verbose parsed url   port: null,
+8 verbose parsed url   hostname: null,
+8 verbose parsed url   hash: null,
+8 verbose parsed url   search: null,
+8 verbose parsed url   query: null,
+8 verbose parsed url   pathname: '.',
+8 verbose parsed url   path: '.',
+8 verbose parsed url   href: '.' }
+9 silly lockFile 3a52ce78- .
+10 verbose lock . /home/nick/.npm/3a52ce78-.lock
+11 verbose tar pack [ '/home/nick/tmp/npm-24483-lamHo5uJ/1403279085721-0.2761171825695783/tmp.tgz',
+11 verbose tar pack   '.' ]
+12 verbose tarball /home/nick/tmp/npm-24483-lamHo5uJ/1403279085721-0.2761171825695783/tmp.tgz
+13 verbose folder .
+14 info prepublish ftpimp@0.4.21
+15 silly lockFile 1f1177db-tar tar://.
+16 verbose lock tar://. /home/nick/.npm/1f1177db-tar.lock
+17 silly lockFile b1b62db3-85721-0-2761171825695783-tmp-tgz tar:///home/nick/tmp/npm-24483-lamHo5uJ/1403279085721-0.2761171825695783/tmp.tgz
+18 verbose lock tar:///home/nick/tmp/npm-24483-lamHo5uJ/1403279085721-0.2761171825695783/tmp.tgz /home/nick/.npm/b1b62db3-85721-0-2761171825695783-tmp-tgz.lock
+19 silly lockFile 1f1177db-tar tar://.
+20 silly lockFile 1f1177db-tar tar://.
+21 silly lockFile b1b62db3-85721-0-2761171825695783-tmp-tgz tar:///home/nick/tmp/npm-24483-lamHo5uJ/1403279085721-0.2761171825695783/tmp.tgz
+22 silly lockFile b1b62db3-85721-0-2761171825695783-tmp-tgz tar:///home/nick/tmp/npm-24483-lamHo5uJ/1403279085721-0.2761171825695783/tmp.tgz
+23 verbose tar unpack /home/nick/tmp/npm-24483-lamHo5uJ/1403279085721-0.2761171825695783/tmp.tgz
+24 silly lockFile ee29ef65-85721-0-2761171825695783-package tar:///home/nick/tmp/npm-24483-lamHo5uJ/1403279085721-0.2761171825695783/package
+25 verbose lock tar:///home/nick/tmp/npm-24483-lamHo5uJ/1403279085721-0.2761171825695783/package /home/nick/.npm/ee29ef65-85721-0-2761171825695783-package.lock
+26 silly lockFile b1b62db3-85721-0-2761171825695783-tmp-tgz tar:///home/nick/tmp/npm-24483-lamHo5uJ/1403279085721-0.2761171825695783/tmp.tgz
+27 verbose lock tar:///home/nick/tmp/npm-24483-lamHo5uJ/1403279085721-0.2761171825695783/tmp.tgz /home/nick/.npm/b1b62db3-85721-0-2761171825695783-tmp-tgz.lock
+28 silly gunzTarPerm modes [ '755', '644' ]
+29 silly gunzTarPerm extractEntry package.json
+30 silly gunzTarPerm modified mode [ 'package.json', 436, 420 ]
+31 silly gunzTarPerm extractEntry README.md
+32 silly gunzTarPerm modified mode [ 'README.md', 436, 420 ]
+33 silly gunzTarPerm extractEntry ftpimp-app.js
+34 silly gunzTarPerm modified mode [ 'ftpimp-app.js', 436, 420 ]
+35 silly gunzTarPerm extractEntry default-config.json
+36 silly gunzTarPerm modified mode [ 'default-config.json', 436, 420 ]
+37 silly gunzTarPerm extractEntry lib/command.js
+38 silly gunzTarPerm modified mode [ 'lib/command.js', 436, 420 ]
+39 silly lockFile ee29ef65-85721-0-2761171825695783-package tar:///home/nick/tmp/npm-24483-lamHo5uJ/1403279085721-0.2761171825695783/package
+40 silly lockFile ee29ef65-85721-0-2761171825695783-package tar:///home/nick/tmp/npm-24483-lamHo5uJ/1403279085721-0.2761171825695783/package
+41 silly lockFile b1b62db3-85721-0-2761171825695783-tmp-tgz tar:///home/nick/tmp/npm-24483-lamHo5uJ/1403279085721-0.2761171825695783/tmp.tgz
+42 silly lockFile b1b62db3-85721-0-2761171825695783-tmp-tgz tar:///home/nick/tmp/npm-24483-lamHo5uJ/1403279085721-0.2761171825695783/tmp.tgz
+43 verbose tar pack [ '/home/nick/.npm/ftpimp/0.4.21/package.tgz',
+43 verbose tar pack   '/home/nick/tmp/npm-24483-lamHo5uJ/1403279085721-0.2761171825695783/package' ]
+44 verbose tarball /home/nick/.npm/ftpimp/0.4.21/package.tgz
+45 verbose folder /home/nick/tmp/npm-24483-lamHo5uJ/1403279085721-0.2761171825695783/package
+46 silly lockFile ee29ef65-85721-0-2761171825695783-package tar:///home/nick/tmp/npm-24483-lamHo5uJ/1403279085721-0.2761171825695783/package
+47 verbose lock tar:///home/nick/tmp/npm-24483-lamHo5uJ/1403279085721-0.2761171825695783/package /home/nick/.npm/ee29ef65-85721-0-2761171825695783-package.lock
+48 silly lockFile b24ff87a-ck-npm-ftpimp-0-4-21-package-tgz tar:///home/nick/.npm/ftpimp/0.4.21/package.tgz
+49 verbose lock tar:///home/nick/.npm/ftpimp/0.4.21/package.tgz /home/nick/.npm/b24ff87a-ck-npm-ftpimp-0-4-21-package-tgz.lock
+50 silly lockFile ee29ef65-85721-0-2761171825695783-package tar:///home/nick/tmp/npm-24483-lamHo5uJ/1403279085721-0.2761171825695783/package
+51 silly lockFile ee29ef65-85721-0-2761171825695783-package tar:///home/nick/tmp/npm-24483-lamHo5uJ/1403279085721-0.2761171825695783/package
+52 silly lockFile b24ff87a-ck-npm-ftpimp-0-4-21-package-tgz tar:///home/nick/.npm/ftpimp/0.4.21/package.tgz
+53 silly lockFile b24ff87a-ck-npm-ftpimp-0-4-21-package-tgz tar:///home/nick/.npm/ftpimp/0.4.21/package.tgz
+54 silly lockFile 2cc2eeab-e-nick-npm-ftpimp-0-4-21-package /home/nick/.npm/ftpimp/0.4.21/package
+55 verbose lock /home/nick/.npm/ftpimp/0.4.21/package /home/nick/.npm/2cc2eeab-e-nick-npm-ftpimp-0-4-21-package.lock
+56 silly lockFile 2cc2eeab-e-nick-npm-ftpimp-0-4-21-package /home/nick/.npm/ftpimp/0.4.21/package
+57 silly lockFile 2cc2eeab-e-nick-npm-ftpimp-0-4-21-package /home/nick/.npm/ftpimp/0.4.21/package
+58 verbose tar unpack /home/nick/.npm/ftpimp/0.4.21/package.tgz
+59 silly lockFile db0ed8cc-e-nick-npm-ftpimp-0-4-21-package tar:///home/nick/.npm/ftpimp/0.4.21/package
+60 verbose lock tar:///home/nick/.npm/ftpimp/0.4.21/package /home/nick/.npm/db0ed8cc-e-nick-npm-ftpimp-0-4-21-package.lock
+61 silly lockFile b24ff87a-ck-npm-ftpimp-0-4-21-package-tgz tar:///home/nick/.npm/ftpimp/0.4.21/package.tgz
+62 verbose lock tar:///home/nick/.npm/ftpimp/0.4.21/package.tgz /home/nick/.npm/b24ff87a-ck-npm-ftpimp-0-4-21-package-tgz.lock
+63 silly gunzTarPerm modes [ '755', '644' ]
+64 silly gunzTarPerm extractEntry package.json
+65 silly gunzTarPerm extractEntry README.md
+66 silly gunzTarPerm extractEntry ftpimp-app.js
+67 silly gunzTarPerm extractEntry default-config.json
+68 silly gunzTarPerm extractEntry lib/command.js
+69 silly lockFile db0ed8cc-e-nick-npm-ftpimp-0-4-21-package tar:///home/nick/.npm/ftpimp/0.4.21/package
+70 silly lockFile db0ed8cc-e-nick-npm-ftpimp-0-4-21-package tar:///home/nick/.npm/ftpimp/0.4.21/package
+71 silly lockFile b24ff87a-ck-npm-ftpimp-0-4-21-package-tgz tar:///home/nick/.npm/ftpimp/0.4.21/package.tgz
+72 silly lockFile b24ff87a-ck-npm-ftpimp-0-4-21-package-tgz tar:///home/nick/.npm/ftpimp/0.4.21/package.tgz
+73 verbose chmod /home/nick/.npm/ftpimp/0.4.21/package.tgz 644
+74 verbose chown /home/nick/.npm/ftpimp/0.4.21/package.tgz [ 1000, 1000 ]
+75 silly lockFile 3a52ce78- .
+76 silly lockFile 3a52ce78- .
+77 silly publish { name: 'ftpimp',
+77 silly publish   version: '0.4.21',
+77 silly publish   preferGlobal: true,
+77 silly publish   license: 'MIT',
+77 silly publish   homepage: 'http://ftpimp.net',
+77 silly publish   description: 'FTP Improved - A better FTP API, built for NodeJS.',
+77 silly publish   main: './ftpimp-app',
+77 silly publish   directories: { lib: './lib' },
+77 silly publish   scripts: { start: '', test: '' },
+77 silly publish   repository: { type: 'git', url: 'https://github.com/sparkida/ftpimp' },
+77 silly publish   keywords: [ 'ftp', 'client', 'improved' ],
+77 silly publish   dependencies: { colors: '*' },
+77 silly publish   engine: { node: '>=0.8.x' },
+77 silly publish   author:
+77 silly publish    { name: 'Nicholas Riley',
+77 silly publish      email: 'nick@sparkida.com',
+77 silly publish      url: 'http://sparkida.com' },
+77 silly publish   readme: '\nFTPimp\n======\nAn improved implementation of the FTP service API for NodeJS.\n**Be sure to update as we our in Beta** and for the next week or\nso every update will address important fixes.\n\nI\'m in the process of adding automation to this FTP module,\ncertain functions like get, put, save, rmdir already exist,\nand I will continue adding / improving them. For the next few\nupdates I will be more focused on the control of the connection,\nthings like KeepAlive and cue rescheduling option on failure.\n\n\nUpdates\n-------\n* Jun 20, 2014 6:56am(PDT) - Fixed an issue with errors not being sent to the callback method\n* Jun 19, 2014 4:15pm(PDT) - Fixed an issue that occured when 0 bytes are received in data transfers\n* Jun 19, 2014 1:35pm(PDT) - **Major Update** Beta v0.4.0 **stable**\n    - **FTP.connect has been replaced for FTP.create**\n    - Resolved all known issues with the cueing of commands and data transfers. Good to Go!\n* Jun 18, 2014 4:35am(PDT) - Fixed an issue with performing multiple data requests\n* Jun 18, 2014 10:35am(PDT) - Fixed an issue with the response handler failing at login \n\n\nAPI Documentation\n-----------------\nFor a full breakdown of this API, including examples: [FTPimp.net](http://ftpimp.net)\nKeep checking back, and don\'t forget to update to the newest version!\n\n\nFind a Bug?\n-----------\nPlease let me know so that I can fix it ASAP, cheers.\n[Report a Bug](https://github.com/sparkida/ftpimp/issues)\n\n\nQuick Start\n-----------\n\n\n```\nvar FTP = require(\'ftpimp\'),\n    ftp = FTP.create({\n        host: \'localhost\',\n        port: 21,\n        user: \'root\',\n        pass: \'\',\n        debug: false\n    }),\n    connected = function () {\n        console.log(\'connected to remote FTP server\');\n    };\n    \nftp.events.once(\'ready\', connected);\n```\n\n\nExamples\n--------\n\n### Recursively delete a directory\n```\nvar recursive = true;\nftp.rmdir(\'foo\', function (err,data) {\n    if (!err) {\n        console.log(\'entire directory deleted\');\n    }\n}, recursive);\n\n```\n\n### Get the size of a remote file\n```\nftp.size(\'main/e1.txt\', function (err, data) {\n    console.log(err, data);\n});\n```\n\n### Put multiple files to server\n```\nftp.put([\'test/testfile1.txt\',\'main/t1.txt\'], function (err, data) {\n    if ( ! err) {\n        console.log(\'file transfered: \' + data);\n    }\n});\n\nftp.put([\'test/testfile2.txt\',\'main/testfile1.txt\'], function (err, data) {\n    if ( ! err) {\n        console.log(\'file transfered: \' + data);\n    }\n});\n\n//Since files are cued asynchronously, use this event to detect\n//when all cued files have been transferred\nftp.events.once(\'fileCueEmpty\', function () {\n    console.log(\'All files transferred\');\n});\n```\n\n### Put files to server and then rename both of them \n```\nftp.put([\'test/testfile1.txt\',\'main/t1.txt\'], function (err, data) {\n    ftp.put([\'test/testfile2.txt\',\'main/testfile1.txt\'], function (err, data) {\n        ftp.rename([\'main/t1.txt\', \'main/e1.txt\'], function (err, data) {\n            if ( ! err) {\n                console.log(\'file renamed: \' + data);\n            }\n        });\n        ftp.rename([\'main/testfile1.txt\', \'main/21.txt\'], function (err, data) {\n            if ( ! err) {\n                console.log(\'file renamed: \' + data);\n            }\n        });\n    });\n});\n```\n\n### Return an array of StatObjects listing files and directories\n```\nftp.ls(\'main2\', function (err, data) {\n    console.log(err, data);\n    ftp.ls(\'main2\', function (err, data) {\n        console.log(err, data);\n    });\n});\n```\n\n### Return an array of file and directorie names found\n```\nftp.lsnames(\'main\', function (err, data) {\n    console.log(err, data);\n});\n\n```\n\n### Recursively delete directory and all files\n```\nftp.mkdir(\'main2\', function () {\n    ftp.mkdir(\'main2/test\', function (err, data) {\n        ftp.put([\'test/testfile1.txt\',\'main2/t1.txt\'], function (err, data) {\n            ftp.rmdir(\'main2\', function (err, data) {\n                if (err) {\n                    console.log(\'+++++\'.yellow);\n                    console.log(err.red);\n                } else { \n                    console.log(data);\n                }\n            }, true);\n        });\n    });\n});\n\n```\n\n### Force Quit the FTP instance\n```\nftp.quit(function (err, data) {\n   console.log(err, data);\n});\n```\n\n### Get the file\'s modification time\n```\nftp.filemtime(\'main/testfile2.txt\', function (err, data) {\n    console.log(err, data);\n});\n\nftp.filemtime(\'main2/t1.txt\', function (err, data) {\n    console.log(err, data);\n});\n\n```\n\n### Fetch a remote file from the server\n```\nftp.get(\'main/testfile2.txt\', function (err, file) {\n    console.log(err, file);\n});\nftp.get(\'main/testfile1.txt\', function (err, file) {\n    console.log(err, file);\n});\n\n```\n\n### Fetch a remote file from the server and save locally\n```\nftp.save([\'main/testfile2.txt\', \'test/t2.txt\'], function (err, filepath) {\n    console.log(err, filepath);\n});\n\nftp.save([\'main/testfile1.txt\', \'test/t1.txt\'], function (err, filepath) {\n    console.log(err, filepath);\n});\n\n```\n\n### Abort the current file transfer\n```\nftp.abort(function (err, data) {\n    ftp.exit();\n});\n\n```\n\n### Delete file from the remote directory\n```\nftp.unlink(\'main/tester/t2.txt\', function (err, data) {\n    ftp.rmdir(\'main/tester\', function (err, data) {\n        console.log(err, data);\n    });\n});\n```\n\n### Make a directory on the remote server\n```\nftp.mkdir(\'tester\', function () {\n    \n    ftp.put([\'tests/testfile1.txt\', \'tester/t1.txt\'], function (err, data) {\n        if(err) {\n            console.log(err);\n            return;\n        }\n        console.log(\'######################---------------file 1 put to server\'.green);\n    });\n    ftp.put([\'tests/testfile2.txt\', \'tester/t2.txt\'], function (err, data) {\n        if (err) {\n            console.log(\'there was an error with file2\');\n            return; \n        }\n        console.log(\'######################---------------file 2 put to server\'.green);\n        console.log(data);\n    });\n\n});\n```\n\n### Show FTP system information\n```\nftp.sys(function (err, data) {\n    console.log(err, data);\n}); \n```\n\n### Print working directory\n```\nftp.run(\'PWD\', function (err, data) {\n    console.log(err, data);\n});\n```\n\n### Run raw commands in a generic cue\n```\nftp.run(\'CWD foo\', function (err, data) {\n        if (err) {\n            console.log(\'could not change working directory\');\n            console.log(err);\n            return;\n        }\n        console.log(\'directory changed\');\n        console.log(data);\n    });\n\nftp.run(\'SIZE main/foo\', function (err, data) {\n    if (err) {\n        console.log(\'there was an error receiving the file\');\n    }\n    console.log(\'size is: \' + data);\n});\n```\n',
+77 silly publish   readmeFilename: 'README.md',
+77 silly publish   bugs: { url: 'https://github.com/sparkida/ftpimp/issues' },
+77 silly publish   _id: 'ftpimp@0.4.21',
+77 silly publish   dist: { shasum: '2d3c77adb642d313dee1b350b88e79d104660045' },
+77 silly publish   _from: '.' }
+78 verbose url raw ftpimp
+79 verbose url resolving [ 'https://registry.npmjs.org/', './ftpimp' ]
+80 verbose url resolved https://registry.npmjs.org/ftpimp
+81 info trying registry request attempt 1 at 08:44:45
+82 http PUT https://registry.npmjs.org/ftpimp
+83 http 403 https://registry.npmjs.org/ftpimp
+84 error publish Failed PUT 403
+85 error Error: forbidden cannot modify pre-existing version: 0.4.21
+85 error old={"name":"ftpimp","version":"0.4.21","preferGlobal":true,"license":"MIT","homepage":"http://ftpimp.net","description":"FTP Improved - A better FTP API, built for NodeJS.","main":"./ftpimp-app","directories":{"lib":"./lib"},"scripts":{"start":"","test":""},"repository":{"type":"git","url":"https://github.com/sparkida/ftpimp"},"keywords":["ftp","client","improved"],"dependencies":{"colors":"*"},"engine":{"node":">=0.8.x"},"author":{"name":"Nicholas Riley","email":"nick@sparkida.com","url":"http://sparkida.com"},"bugs":{"url":"https://github.com/sparkida/ftpimp/issues"},"_id":"ftpimp@0.4.21","dist":{"shasum":"821e0dcfc5a2fc94291fbb32b64274814660aabc","tarball":"http://registry.npmjs.org/ftpimp/-/ftpimp-0.4.21.tgz"},"_from":".","_npmVersion":"1.4.3","_npmUser":{"name":"sparkida","email":"nick@sparkida.com"},"maintainers":[{"name":"sparkida","email":"nick@sparkida.com"}]}
+85 error new={"name":"ftpimp","version":"0.4.21","preferGlobal":true,"license":"MIT","homepage":"http://ftpimp.net","description":"FTP Improved - A better FTP API, built for NodeJS.","main":"./ftpimp-app","directories":{"lib":"./lib"},"scripts":{"start":"","test":""},"repository":{"type":"git","url":"https://github.com/sparkida/ftpimp"},"keywords":["ftp","client","improved"],"dependencies":{"colors":"*"},"engine":{"node":">=0.8.x"},"author":{"name":"Nicholas Riley","email":"nick@sparkida.com","url":"http://sparkida.com"},"readme":"\u000aFTPimp\u000a======\u000aAn improved implementation of the FTP service API for NodeJS.\u000a**Be sure to update as we our in Beta** and for the next week or\u000aso every update will address important fixes.\u000a\u000aI'm in the process of adding automation to this FTP module,\u000acertain functions like get, put, save, rmdir already exist,\u000aand I will continue adding / improving them. For the next few\u000aupdates I will be more focused on the control of the connection,\u000athings like KeepAlive and cue rescheduling option on failure.\u000a\u000a\u000aUpdates\u000a-------\u000a* Jun 20, 2014 6:56am(PDT) - Fixed an issue with errors not being sent to the callback method\u000a* Jun 19, 2014 4:15pm(PDT) - Fixed an issue that occured when 0 bytes are received in data transfers\u000a* Jun 19, 2014 1:35pm(PDT) - **Major Update** Beta v0.4.0 **stable**\u000a    - **FTP.connect has been replaced for FTP.create**\u000a    - Resolved all known issues with the cueing of commands and data transfers. Good to Go!\u000a* Jun 18, 2014 4:35am(PDT) - Fixed an issue with performing multiple data requests\u000a* Jun 18, 2014 10:35am(PDT) - Fixed an issue with the response handler failing at login \u000a\u000a\u000aAPI Documentation\u000a-----------------\u000aFor a full breakdown of this API, including examples: [FTPimp.net](http://ftpimp.net)\u000aKeep checking back, and don't forget to update to the newest version!\u000a\u000a\u000aFind a Bug?\u000a-----------\u000aPlease let me know so that I can fix it ASAP, cheers.\u000a[Report a Bug](https://github.com/sparkida/ftpimp/issues)\u000a\u000a\u000aQuick Start\u000a-----------\u000a\u000a\u000a```\u000avar FTP = require('ftpimp'),\u000a    ftp = FTP.create({\u000a        host: 'localhost',\u000a        port: 21,\u000a        user: 'root',\u000a        pass: '',\u000a        debug: false\u000a    }),\u000a    connected = function () {\u000a        console.log('connected to remote FTP server');\u000a    };\u000a    \u000aftp.events.once('ready', connected);\u000a```\u000a\u000a\u000aExamples\u000a--------\u000a\u000a### Recursively delete a directory\u000a```\u000avar recursive = true;\u000aftp.rmdir('foo', function (err,data) {\u000a    if (!err) {\u000a        console.log('entire directory deleted');\u000a    }\u000a}, recursive);\u000a\u000a```\u000a\u000a### Get the size of a remote file\u000a```\u000aftp.size('main/e1.txt', function (err, data) {\u000a    console.log(err, data);\u000a});\u000a```\u000a\u000a### Put multiple files to server\u000a```\u000aftp.put(['test/testfile1.txt','main/t1.txt'], function (err, data) {\u000a    if ( ! err) {\u000a        console.log('file transfered: ' + data);\u000a    }\u000a});\u000a\u000aftp.put(['test/testfile2.txt','main/testfile1.txt'], function (err, data) {\u000a    if ( ! err) {\u000a        console.log('file transfered: ' + data);\u000a    }\u000a});\u000a\u000a//Since files are cued asynchronously, use this event to detect\u000a//when all cued files have been transferred\u000aftp.events.once('fileCueEmpty', function () {\u000a    console.log('All files transferred');\u000a});\u000a```\u000a\u000a### Put files to server and then rename both of them \u000a```\u000aftp.put(['test/testfile1.txt','main/t1.txt'], function (err, data) {\u000a    ftp.put(['test/testfile2.txt','main/testfile1.txt'], function (err, data) {\u000a        ftp.rename(['main/t1.txt', 'main/e1.txt'], function (err, data) {\u000a            if ( ! err) {\u000a                console.log('file renamed: ' + data);\u000a            }\u000a        });\u000a        ftp.rename(['main/testfile1.txt', 'main/21.txt'], function (err, data) {\u000a            if ( ! err) {\u000a                console.log('file renamed: ' + data);\u000a            }\u000a        });\u000a    });\u000a});\u000a```\u000a\u000a### Return an array of StatObjects listing files and directories\u000a```\u000aftp.ls('main2', function (err, data) {\u000a    console.log(err, data);\u000a    ftp.ls('main2', function (err, data) {\u000a        console.log(err, data);\u000a    });\u000a});\u000a```\u000a\u000a### Return an array of file and directorie names found\u000a```\u000aftp.lsnames('main', function (err, data) {\u000a    console.log(err, data);\u000a});\u000a\u000a```\u000a\u000a### Recursively delete directory and all files\u000a```\u000aftp.mkdir('main2', function () {\u000a    ftp.mkdir('main2/test', function (err, data) {\u000a        ftp.put(['test/testfile1.txt','main2/t1.txt'], function (err, data) {\u000a            ftp.rmdir('main2', function (err, data) {\u000a                if (err) {\u000a                    console.log('+++++'.yellow);\u000a                    console.log(err.red);\u000a                } else { \u000a                    console.log(data);\u000a                }\u000a            }, true);\u000a        });\u000a    });\u000a});\u000a\u000a```\u000a\u000a### Force Quit the FTP instance\u000a```\u000aftp.quit(function (err, data) {\u000a   console.log(err, data);\u000a});\u000a```\u000a\u000a### Get the file's modification time\u000a```\u000aftp.filemtime('main/testfile2.txt', function (err, data) {\u000a    console.log(err, data);\u000a});\u000a\u000aftp.filemtime('main2/t1.txt', function (err, data) {\u000a    console.log(err, data);\u000a});\u000a\u000a```\u000a\u000a### Fetch a remote file from the server\u000a```\u000aftp.get('main/testfile2.txt', function (err, file) {\u000a    console.log(err, file);\u000a});\u000aftp.get('main/testfile1.txt', function (err, file) {\u000a    console.log(err, file);\u000a});\u000a\u000a```\u000a\u000a### Fetch a remote file from the server and save locally\u000a```\u000aftp.save(['main/testfile2.txt', 'test/t2.txt'], function (err, filepath) {\u000a    console.log(err, filepath);\u000a});\u000a\u000aftp.save(['main/testfile1.txt', 'test/t1.txt'], function (err, filepath) {\u000a    console.log(err, filepath);\u000a});\u000a\u000a```\u000a\u000a### Abort the current file transfer\u000a```\u000aftp.abort(function (err, data) {\u000a    ftp.exit();\u000a});\u000a\u000a```\u000a\u000a### Delete file from the remote directory\u000a```\u000aftp.unlink('main/tester/t2.txt', function (err, data) {\u000a    ftp.rmdir('main/tester', function (err, data) {\u000a        console.log(err, data);\u000a    });\u000a});\u000a```\u000a\u000a### Make a directory on the remote server\u000a```\u000aftp.mkdir('tester', function () {\u000a    \u000a    ftp.put(['tests/testfile1.txt', 'tester/t1.txt'], function (err, data) {\u000a        if(err) {\u000a            console.log(err);\u000a            return;\u000a        }\u000a        console.log('######################---------------file 1 put to server'.green);\u000a    });\u000a    ftp.put(['tests/testfile2.txt', 'tester/t2.txt'], function (err, data) {\u000a        if (err) {\u000a            console.log('there was an error with file2');\u000a            return; \u000a        }\u000a        console.log('######################---------------file 2 put to server'.green);\u000a        console.log(data);\u000a    });\u000a\u000a});\u000a```\u000a\u000a### Show FTP system information\u000a```\u000aftp.sys(function (err, data) {\u000a    console.log(err, data);\u000a}); \u000a```\u000a\u000a### Print working directory\u000a```\u000aftp.run('PWD', function (err, data) {\u000a    console.log(err, data);\u000a});\u000a```\u000a\u000a### Run raw commands in a generic cue\u000a```\u000aftp.run('CWD foo', function (err, data) {\u000a        if (err) {\u000a            console.log('could not change working directory');\u000a            console.log(err);\u000a            return;\u000a        }\u000a        console.log('directory changed');\u000a        console.log(data);\u000a    });\u000a\u000aftp.run('SIZE main/foo', function (err, data) {\u000a    if (err) {\u000a        console.log('there was an error receiving the file');\u000a    }\u000a    console.log('size is: ' + data);\u000a});\u000a```\u000a","readmeFilename":"README.md","bugs":{"url":"https://github.com/sparkida/ftpimp/issues"},"_id":"ftpimp@0.4.21","dist":{"shasum":"2d3c77adb642d313dee1b350b88e79d104660045","tarball":"http://registry.npmjs.org/ftpimp/-/ftpimp-0.4.21.tgz"},"_from":".","_npmVersion":"1.4.3","_npmUser":{"name":"sparkida","email":"nick@sparkida.com"},"maintainers":[{"name":"sparkida","email":"nick@sparkida.com"}]}: ftpimp
+85 error     at RegClient.<anonymous> (/usr/local/lib/node_modules/npm/node_modules/npm-registry-client/lib/request.js:237:14)
+85 error     at Request.self.callback (/usr/local/lib/node_modules/npm/node_modules/request/request.js:123:22)
+85 error     at Request.EventEmitter.emit (events.js:98:17)
+85 error     at Request.<anonymous> (/usr/local/lib/node_modules/npm/node_modules/request/request.js:893:14)
+85 error     at Request.EventEmitter.emit (events.js:117:20)
+85 error     at IncomingMessage.<anonymous> (/usr/local/lib/node_modules/npm/node_modules/request/request.js:844:12)
+85 error     at IncomingMessage.EventEmitter.emit (events.js:117:20)
+85 error     at _stream_readable.js:920:16
+85 error     at process._tickCallback (node.js:415:13)
+86 error If you need help, you may report this *entire* log,
+86 error including the npm and node versions, at:
+86 error     <http://github.com/npm/npm/issues>
+87 error System Linux 3.11.0-20-generic
+88 error command "/usr/local/bin/node" "/usr/local/bin/npm" "publish" "-f"
+89 error cwd /home/nick/ftpimp
+90 error node -v v0.10.26
+91 error npm -v 1.4.3
+92 verbose exit [ 1, true ]

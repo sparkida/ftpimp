@@ -1,6 +1,6 @@
 {
 	"name": "ftpimp",
-	"version": "0.4.2",
+	"version": "0.4.22",
 	"preferGlobal": true,
     "license": "MIT",
     "homepage": "http://ftpimp.net",
@@ -10,8 +10,8 @@
 		"lib": "./lib"
 	},
 	"scripts": {
-		"start": "node ./tests/ftp",
-		"test": "./inspect -f && node --debug ./tests/ftp"
+		"start": "",
+		"test": ""
 	},
 	"repository": {
 		"type": "git",
@@ -20,11 +20,7 @@
 	"keywords": [
 		"ftp",
         "client",
-        "file",
-        "transfer",
-        "upload",
-        "mget",
-        "mput"
+        "improved"
 	],
 	"dependencies": {
         "colors": "*"

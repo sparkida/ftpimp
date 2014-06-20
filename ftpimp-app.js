@@ -241,13 +241,17 @@ proto.run = function (command, callback, runNow) {//{{{
     }
     runNow = runNow === undefined ? false : runNow;
     callbackConstruct = function () {
-        dbg('>Run callbackConstruct'.yellow);
-        dbg('command sent: ' + command);
-        if (method === 'PASV') {
-            ftp.handle.waiting = true;
-        }
+        dbg('>Run callbackConstruct'.yellow + ' ' + command);
+        /*if (method === 'PASV') {
+            handle.data.waiting = true;
+        }*/
         var endTransfer = function () {
                 dbg('ending transfer --- should be no data'.red);
+                try {
+                    ftp.pipe.removeListener('data', pipeTransfer);
+                } catch (pipeError2) {
+                    dbg('<pipeTransfer not set>'.yellow);
+                }
                 callback.call(callback, null, null);
                 ftp.events.emit('endproc');
             },
@@ -255,7 +259,11 @@ proto.run = function (command, callback, runNow) {//{{{
                 data = data.toString();
                 dbg('----closing pipe-----'.red);
                 dbg(data);
-                ftp.pipe.removeListener(endTransfer);
+                try {
+                    ftp.pipe.removeListener('end', endTransfer);
+                } catch (pipeError1) {
+                    dbg('<endTransfer not set>'.yellow);
+                }
                 ftp.pipe.once('end', function () {
                     callback.call(callback, null, data);
                     ftp.events.emit('endproc');
@@ -263,7 +271,11 @@ proto.run = function (command, callback, runNow) {//{{{
             },
             responseHandler = function (code, data) {
                 dbg('---------response hanlder--------'.cyan);
-                if (code === '150' && method !== 'STOR') {
+                if (code === '550') {
+                    callback.call(callback, data, null);
+                    ftp.events.emit('endproc');
+                }
+                else if (code === '150' && method !== 'STOR') {
                     dbg('listening for pipe data'.red);
                     if (ftp.pipeClosed) {
                         dbg('pipe already closed'.yellow);
@@ -271,8 +283,8 @@ proto.run = function (command, callback, runNow) {//{{{
                         endTransfer();
                         return;
                     }
-                    ftp.pipe.once('data', pipeTransfer);
                     ftp.pipe.once('end', endTransfer);
+                    ftp.pipe.once('data', pipeTransfer);
                 } else {
                     callback.call(callback, null, data);
                     ftp.events.emit('endproc');
@@ -280,8 +292,10 @@ proto.run = function (command, callback, runNow) {//{{{
             };
 
         ftp.events.once('response', responseHandler);
-        ftp.handle.data.waiting = true;
-        ftp.socket.write(command + '\n');
+        handle.data.waiting = true;
+        ftp.socket.write(command + '\n', function () {
+            dbg('command sent: ' + command);
+        });
     };
     runNow ? callbackConstruct() : ftp.cue.register(callbackConstruct);
 };//}}}
@@ -488,6 +502,7 @@ handle.uncaughtException = function (err) {//{{{
  * @function FTP#Handle#data
  */
 handle.data = function (data) {//{{{
+    dbg('....................');
     var strData = data.toString().trim(),
         strParts,
         commandCodes = [],
@@ -507,7 +522,7 @@ handle.data = function (data) {//{{{
                     /*if (code === '150') {
                         dbg('holding for data transfer'.yellow);
                     } else {*/
-                        ftp.events.emit('response', code, strData);
+                    ftp.events.emit('response', code, strData);
                     //}
                 } else {
                     dbg(2222);
@@ -519,6 +534,7 @@ handle.data = function (data) {//{{{
         run = function () {
             if (undefined !== cmd.keys[code]) {
                 if (code === '227') {
+                    handle.data.waiting = true;
                     ftp.events.once('commandComplete', end);
                 }
                 cmdName = cmd.keys[code];        

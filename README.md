@@ -14,6 +14,7 @@ things like KeepAlive and cue rescheduling option on failure.
 
 Updates
 -------
+* Jun 20, 2014 6:56am(PDT) - Fixed an issue with errors not being sent to the callback method
 * Jun 19, 2014 4:15pm(PDT) - Fixed an issue that occured when 0 bytes are received in data transfers
 * Jun 19, 2014 1:35pm(PDT) - **Major Update** Beta v0.4.0 **stable**
     - **FTP.connect has been replaced for FTP.create**
