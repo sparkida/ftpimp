@@ -32,6 +32,7 @@ var net = require('net'),//{{{
      * @todo The major functions have been added and this current version
      * is more stable and geared for asynchronous NodeJS. We will be implementing
      * the following commands shortly
+     * @todo Add 
      * @todo Add FTP.stou
      * @todo Add FTP.rein
      * @todo Add FTP.site
@@ -69,6 +70,12 @@ var net = require('net'),//{{{
     proto = FTP.prototype = {//{{{
         totalPipes: 0,
         openPipes: 0,
+        /**
+         * Set once the ftp connection is established
+         * @alias FTP#isReady
+         * @type {object}
+         */
+        isReady: false,
         /**
          * Refernce to the socket created for data transfers  
          * @alias FTP#pipe
@@ -154,6 +161,8 @@ var net = require('net'),//{{{
  */
 FTP.create = function (cfg, connect) {return new FTP(cfg, connect);};
 
+/* @memberof FTP. */
+FTP.CMD = CMD;
 
 /** @constructor FTP#Handle */
 proto.Handle = function () {};
@@ -271,7 +280,7 @@ proto.run = function (command, callback, runNow) {//{{{
             },
             responseHandler = function (code, data) {
                 dbg('---------response hanlder--------'.cyan);
-                if (code === '550') {
+                if (code[0] === '5') {
                     callback.call(callback, data, null);
                     ftp.events.emit('endproc');
                 }
@@ -607,16 +616,23 @@ proto.exit = function (sig) {//{{{
 
 /**
  * Creates a new socket connection for sending commands
- * to the ftp server 
+ * to the ftp server and runs an optional callback when logged in
  * @function FTP#connect
+ * @param {function} callback - The callback function to be issued. (optional)
  */
-proto.connect = function () {//{{{
+proto.connect = function (callback) {//{{{
     /**
      * Holds the connected socket object
      * @namespace FTP#socket
      */
     ftp.socket = net.createConnection(21, 'ftp.sparkida.com');
     ftp.socket.on('connect', handle.connected);
+    if (undefined !== callback && typeof callback === 'function') {
+        dbg('connect: callback');
+        ftp.events.once('ready', callback);
+    } else {
+        dbg('connect: no callback');
+    }
     ftp.socket.on('close', function () {
         dbg('**********socket CLOSED**************');
         process.exit(0);
@@ -712,6 +728,16 @@ proto.put = (function () {//{{{
             }
             ftp.pipeActive = running = true;
             curId = cueIndex.splice(0,1)[0];
+            //if the local path wasnt found
+            if ( ! cue[curId].path) {
+                var callback = cue[curId].callback,
+                       data = cue[curId].data;
+                cue[curId] = null;
+                delete cue[curId];
+                callback.call(callback, data, null);
+                return;
+            }
+                 
             //make sure pipe wasn't aborted
             ftp.events.once('pipeAborted', checkAborted);
             ftp.openDataPort(function () {
@@ -790,7 +816,11 @@ proto.put = (function () {//{{{
         pipeFile = function (err, filedata) {
             dbg(('>piping file: ' + localPath).green);
             if (err) {
-                dbg(err);
+                cue[id] = {
+                    callback: callback,
+                    data: err,
+                    path: false
+                };
             } else {
                 dbg('>cueing file: "' + localPath + '" to "' + remotePath + '"');
                 cue[id] = {
@@ -798,8 +828,8 @@ proto.put = (function () {//{{{
                     data: filedata,
                     path: remotePath
                 };
-                runCue();
             }            
+            runCue();
         };
         fs.readFile(localPath, pipeFile);
     }
@@ -1081,7 +1111,7 @@ StatObject.prototype = {//{{{
      * The regular expression used to parse the stat string 
      * @type {object}
      */
-    _reg: /([dl-])([wrx-]{9})\s+([0-9]+)\s(\w+)\s+(\w+)\s+([0-9]+)\s(\w+\s+[0-9]{1,2}\s[0-9]{2}:[0-9]{2})\s([\w\.\~\+\-_>\s]+)/,
+    _reg: /([dl\-])([wrx\-]{9})\s+([0-9]+)\s(\w+)\s+(\w+)\s+([0-9]+)\s(\w+\s+[0-9]{1,2}\s[0-9]{2}:[0-9]{2})\s([\w\.\~\+\-_>\s\\\/]+)/,
     //TODO -- raw 
     /** 
      * The actual response string

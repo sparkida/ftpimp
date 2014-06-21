@@ -14,6 +14,8 @@ things like KeepAlive and cue rescheduling option on failure.
 
 Updates
 -------
+* Jun 21, 2014 3:43pm(PDT) - Fixed regular expression in FTP.ls to grab deep paths
+* Jun 21, 2014 12:16pm(PDT) - FTP.put will now return error if the local file is not found
 * Jun 20, 2014 6:56am(PDT) - Fixed an issue with errors not being sent to the callback method
 * Jun 19, 2014 4:15pm(PDT) - Fixed an issue that occured when 0 bytes are received in data transfers
 * Jun 19, 2014 1:35pm(PDT) - **Major Update** Beta v0.4.0 **stable**
@@ -31,7 +33,7 @@ Keep checking back, and don't forget to update to the newest version!
 
 Find a Bug?
 -----------
-Please let me know so that I can fix it ASAP, cheers.
+Please let me know so that I can fix it ASAP, cheers. 
 [Report a Bug](https://github.com/sparkida/ftpimp/issues)
 
 
