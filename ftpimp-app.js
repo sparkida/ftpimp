@@ -881,17 +881,53 @@ proto.root = function (callback) {//{{{
  * @function FTP#mkdir
  * @param {string} dirpath - The directory name to be created.
  * @param {function} callback - The callback function to be issued.
+ * @param {string} recursive - Recursively create directories. (default: false)
  */
-proto.mkdir = function (dirpath, callback) {//{{{
+proto.mkdir = function (dirpath, callback, recursive) {//{{{
     //TODO add in error handling for parameters
     dbg('making directory: ' + dirpath);
-    var mkdirHandler = function (err, data) {
+    recursive = undefined === recursive ? false : recursive;
+    
+    var created = [],
+        mkdirHandler = function (err, data) {
             if ( ! err) {
                 data = data.match(/"(.*)"/)[1];
             }
             callback.call(callback, err, data);
         };
-    ftp.run('MKD ' + dirpath, mkdirHandler);
+
+    //hijack mkdirHandler
+    if (recursive) {
+        //make directories if they don't exist
+        var existsOrBuild= function (dirpath) {
+                ftp.chdir(dirpath, function (err, data) {
+                    if (err) {
+                        dbg('error changing directory', err);
+                    } else {
+                        dbg('directory changed: ', data);
+                    }
+                });
+            },
+            paths = dirpath.split(path.sep).filter(Boolean),
+            pathsLength = paths.length,
+            cur = '',
+            i = 0;
+
+        for (i; i < pathsLength; i++) {
+            //skip if path is current
+            if (paths[i] === ftp.cwd) {
+                continue;
+            }
+            cur += path.sep + paths[i];
+            existsOrBuild(cur);
+        }
+        ftp.events.once('recursionComplete', function () {
+            callback.call(callback);
+        });          
+            
+    } else {
+        ftp.run('MKD ' + dirpath, mkdirHandler);
+    }
 };//}}}
 
 /**
