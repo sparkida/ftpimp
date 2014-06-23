@@ -53,9 +53,12 @@ var net = require('net'),//{{{
                     ftp.config[n] = cfg[n];
                 }
             }
+
             if (ftp.config.debug) {
-                dbg = function (msg) {
-                    console.log(msg);
+                dbg = function () {
+                    for (n = 0; n < arguments.length; n++) {
+                        console.log(arguments[n]);
+                    }
                 };
             }
         }
@@ -877,7 +880,8 @@ proto.root = function (callback) {//{{{
 
 
 /**
- * Creates a directory and returns the directory name
+ * Creates a directory and returns the directory name.
+ * Optionally create directories recursively. * 
  * @function FTP#mkdir
  * @param {string} dirpath - The directory name to be created.
  * @param {function} callback - The callback function to be issued.
@@ -903,28 +907,37 @@ proto.mkdir = function (dirpath, callback, recursive) {//{{{
                 ftp.chdir(dirpath, function (err, data) {
                     if (err) {
                         dbg('error changing directory', err);
+                        ftp.run('MKD ' + dirpath, function (err, data) {
+                            if (err) {
+                                dbg(err);
+                            } else {
+                                data = data.match(/"(.*)"/)[1];
+                                created.push(data);
+                            }
+                            loop();
+                        }, true);
                     } else {
                         dbg('directory changed: ', data);
+                        loop();
                     }
                 });
             },
             paths = dirpath.split(path.sep).filter(Boolean),
             pathsLength = paths.length,
             cur = '',
-            i = 0;
-
-        for (i; i < pathsLength; i++) {
-            //skip if path is current
-            if (paths[i] === ftp.cwd) {
-                continue;
-            }
-            cur += path.sep + paths[i];
-            existsOrBuild(cur);
-        }
-        ftp.events.once('recursionComplete', function () {
-            callback.call(callback);
-        });          
-            
+            created = [],
+            i = 0,
+            loop = function () {
+                if (i === pathsLength) {
+                    callback.call(callback, null, created);
+                    return;
+                }
+                //skip if path is current
+                cur += path.sep + paths[i];
+                i += 1;
+                existsOrBuild(cur);
+            };
+        loop();
     } else {
         ftp.run('MKD ' + dirpath, mkdirHandler);
     }
@@ -1011,6 +1024,7 @@ proto.getcwd = function (callback) {//{{{
 proto.chdir = function (dirname, callback) {//{{{
     ftp.run('CWD ' + dirname, function (err, data) {
         if ( ! err) {
+            dbg(data);
             data = data.match(/directory is (.*)/)[1];
             ftp.cwd = data;
         }
