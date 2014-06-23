@@ -14,6 +14,7 @@ things like KeepAlive and cue rescheduling option on failure.
 
 Updates
 -------
+* Jun 22, 2014 5:20am(PDT) - FTP.mkdir and FTP.rmdir both have the option to recursively create and delete directories.
 * Jun 21, 2014 3:43pm(PDT) - Fixed regular expression in FTP.ls to grab deep paths
 * Jun 21, 2014 12:16pm(PDT) - FTP.put will now return error if the local file is not found
 * Jun 20, 2014 6:56am(PDT) - Fixed an issue with errors not being sent to the callback method
