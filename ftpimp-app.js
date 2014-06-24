@@ -71,6 +71,7 @@ var net = require('net'),//{{{
         }
     },//}}}
     proto = FTP.prototype = {//{{{
+        //todo
         totalPipes: 0,
         openPipes: 0,
         /**
@@ -239,25 +240,46 @@ proto.init = function () {//{{{
  * be a need to have immediate control over the connection, like when sending
  * the command <b>"STOR"</b> to tell the server to close the data port's connection
  * and write the file
+ * @param {boolean} holdCue - Prevents the cue from firing an endproc event, user must end manually
  */
 proto.run = function (command, callback, runNow) {//{{{
     var callbackConstruct,
         dataHandler,
-        method = command.split(' ', 1)[0];
-    dbg('run: ' + command);
+        method = command.split(' ', 1)[0],
+        holdCue = false;
+    runNow = runNow === undefined ? false : runNow;
+    dbg('}++++++++++', callback instanceof ftp.handle.HoldCue);
+    if (callback instanceof ftp.handle.HoldCue) {
+        //if we are already holding, append
+        if (ftp.holdCue.processing) {
+            dbg('registering holdCue');
+            ftp.holdCue.register(command, [callback, runNow]);
+            return;
+        }
+        ftp.holdCue.processing = true;
+        callback = callback.callback;
+    }
+    holdCue = ftp.holdCue.processing;
+    dbg((holdCue ? 'Run> holding command: ' : 'Run > loading command: ').cyan 
+            + command + '\n' + (runNow ? 'running now' : 'adding to cue').cyan);
     if (undefined === command) { //TODO || cmd.allowed.indexOf(command.toLowerCase) {
         throw new Error('ftp.run > parameter 1 expected command{string}');
     }
     else if (undefined === callback || typeof callback !== 'function') {
         throw new Error('ftp.run > parameter 2 expected a callback function');
     }
-    runNow = runNow === undefined ? false : runNow;
     callbackConstruct = function () {
         dbg('>Run callbackConstruct'.yellow + ' ' + command);
-        /*if (method === 'PASV') {
-            handle.data.waiting = true;
-        }*/
-        var endTransfer = function () {
+        var checkProc = function () {
+                dbg((command + ' holdCue ' + (holdCue ? 'enabled' : 'disabled')).red);
+                if ( ! holdCue) {
+                    ftp.events.emit('endproc');
+                }
+                else {
+                    ftp.events.emit('endcue');
+                }
+            },
+            endTransfer = function () {
                 dbg('ending transfer --- should be no data'.red);
                 try {
                     ftp.pipe.removeListener('data', pipeTransfer);
@@ -265,12 +287,11 @@ proto.run = function (command, callback, runNow) {//{{{
                     dbg('<pipeTransfer not set>'.yellow);
                 }
                 callback.call(callback, null, null);
-                ftp.events.emit('endproc');
+                checkProc();
             },
             pipeTransfer = function (data) {
                 data = data.toString();
-                dbg('----closing pipe-----'.red);
-                dbg(data);
+                dbg('----closing pipe-----'.red, data);
                 try {
                     ftp.pipe.removeListener('end', endTransfer);
                 } catch (pipeError1) {
@@ -278,14 +299,14 @@ proto.run = function (command, callback, runNow) {//{{{
                 }
                 ftp.pipe.once('end', function () {
                     callback.call(callback, null, data);
-                    ftp.events.emit('endproc');
+                    checkProc();
                 });
             },
             responseHandler = function (code, data) {
                 dbg('---------response hanlder--------'.cyan);
                 if (code[0] === '5') {
                     callback.call(callback, data, null);
-                    ftp.events.emit('endproc');
+                    checkProc();
                 }
                 else if (code === '150' && method !== 'STOR') {
                     dbg('listening for pipe data'.red);
@@ -299,7 +320,7 @@ proto.run = function (command, callback, runNow) {//{{{
                     ftp.pipe.once('data', pipeTransfer);
                 } else {
                     callback.call(callback, null, data);
-                    ftp.events.emit('endproc');
+                    checkProc();
                 }
             };
 
@@ -345,10 +366,11 @@ proto.cue = {//{{{
         }
     },
     run: function () {
+        dbg('endproc > running cue'.yellow);
         if (ftp.cue._cue.length > 0) {
             ftp.cue.processing = true;
             dbg('>cue loaded...running');
-            ftp.cue.currentProc = ftp.cue._cue.splice(0,1)[0];
+            ftp.cue.currentProc = ftp.cue._cue.shift();
             if ( ! ftp.error) {
                 ftp.cue.currentProc.call(ftp.cue.currentProc);
             }
@@ -360,6 +382,39 @@ proto.cue = {//{{{
 };
 proto.events.on('endproc', proto.cue.run);//}}}
 
+proto.holdCue = {//{{{
+    _holdCue: {},
+    _holdCueIndex: [],
+    processing: false,
+    register: function (command, args) {
+        dbg('>registering holdcue: ' + command);
+        dbg(ftp.holdCue.processing, ftp.holdCue._holdCue.length);
+        var id = new Date().getTime() + '_' + Math.floor(Math.random() * 1000 + 1);
+        ftp.holdCue._holdCueIndex.push(id);
+        args.unshift(command);
+        ftp.holdCue._holdCue[id] = args;
+        if ( ! ftp.holdCue.processing) {
+            //ftp.holdCue.run();
+            ftp.events.emit('holdCueEmpty');
+        }
+    },
+    run: function () {
+        dbg('>loading holdCue...'.yellow);
+        if (ftp.holdCue._holdCueIndex.length > 0) {
+            if (ftp.holdCue.processing) {
+                return;
+            }
+            var id = ftp.holdCue._holdCueIndex.shift(),
+                current = ftp.holdCue._holdCue[id];
+            dbg('>holdCue loaded...running');
+            ftp.run.apply(ftp, current);
+        } else {
+            ftp.holdCue.processing = false;
+            dbg('--holdCue empty--');
+        }
+    }
+};
+proto.events.on('holdCueEmpty', proto.holdCue.run);//}}}
 
 /**
  * Provides a factory to create a simple cue procedure. Look
@@ -879,6 +934,30 @@ proto.root = function (callback) {//{{{
 };//}}}
 
 
+//TODO
+handle.HoldCue = function (callback) {
+    dbg('building holdcue--------------------------'.red);
+    dbg(this instanceof ftp.handle.HoldCue);
+    this.callback = callback;
+    this.holdCue = true; 
+};
+
+
+//TODO
+handle.HoldCue.create = function (callback) {
+    return new ftp.handle.HoldCue(callback);
+};
+
+handle.HoldCue.prototype.end = function () {
+    ftp.events.once('endcue', function () {
+        console.log('disabling holdCue'.red);
+        ftp.holdCue.processing = false;
+        ftp.events.emit('holdCueEmpty');
+        ftp.events.emit('endproc');
+    });
+};
+
+
 /**
  * Creates a directory and returns the directory name.
  * Optionally create directories recursively. * 
@@ -891,7 +970,6 @@ proto.mkdir = function (dirpath, callback, recursive) {//{{{
     //TODO add in error handling for parameters
     dbg('making directory: ' + dirpath);
     recursive = undefined === recursive ? false : recursive;
-    
     var created = [],
         mkdirHandler = function (err, data) {
             if ( ! err) {
@@ -899,28 +977,34 @@ proto.mkdir = function (dirpath, callback, recursive) {//{{{
             }
             callback.call(callback, err, data);
         };
-
     //hijack mkdirHandler
     if (recursive) {
-        //make directories if they don't exist
-        var existsOrBuild= function (dirpath) {
-                ftp.chdir(dirpath, function (err, data) {
-                    if (err) {
-                        dbg('error changing directory', err);
-                        ftp.run('MKD ' + dirpath, function (err, data) {
-                            if (err) {
-                                dbg(err);
-                            } else {
-                                data = data.match(/"(.*)"/)[1];
-                                created.push(data);
-                            }
+        //create a HoldCue instance
+        var holdCue,
+            //make directories if they don't exist
+            existsOrBuild= function (index, dirpath) {
+                var dirCue = function (err, data) {
+                        if (err) {
+                            dbg('error changing directory', err);
+                            ftp.run('MKD ' + dirpath, function (err, data) {
+                                if (err) {
+                                    dbg(err);
+                                } else {
+                                    data = data.match(/"(.*)"/)[1];
+                                    created.push(data);
+                                }
+                                loop();
+                            }, true);
+                        } else {
+                            dbg('directory changed: ', data);
                             loop();
-                        }, true);
-                    } else {
-                        dbg('directory changed: ', data);
-                        loop();
-                    }
-                });
+                        }
+                    };
+                if (index === 1) {
+                    holdCue = ftp.handle.HoldCue.create(dirCue);
+                }
+                //run with HoldCue instance on first, otherwise run immediately
+                ftp.run('CWD ' + dirpath, index === 1 ? holdCue : dirCue, index !== 1);
             },
             paths = dirpath.split(path.sep).filter(Boolean),
             pathsLength = paths.length,
@@ -929,13 +1013,15 @@ proto.mkdir = function (dirpath, callback, recursive) {//{{{
             i = 0,
             loop = function () {
                 if (i === pathsLength) {
+                    dbg('1111');
                     callback.call(callback, null, created);
+                    holdCue.end();
                     return;
                 }
                 //skip if path is current
                 cur += path.sep + paths[i];
                 i += 1;
-                existsOrBuild(cur);
+                existsOrBuild(i, cur);
             };
         loop();
     } else {

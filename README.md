@@ -6,7 +6,7 @@ An improved implementation of the FTP service API for NodeJS.
 so every update will address important fixes.
 
 I'm in the process of adding automation to this FTP module,
-certain functions like get, put, save, rmdir already exist,
+certain functions like get, put, save, rmdir, mkdir already exist,
 and I will continue adding / improving them. For the next few
 updates I will be more focused on the control of the connection,
 things like KeepAlive and cue rescheduling option on failure.
@@ -14,6 +14,7 @@ things like KeepAlive and cue rescheduling option on failure.
 
 Updates
 -------
+* Jun 23, 2014 7:46am(PDT) - Fixed a cueing issue with mkdir
 * Jun 22, 2014 5:20am(PDT) - FTP.mkdir and FTP.rmdir both have the option to recursively create and delete directories.
 * Jun 21, 2014 3:43pm(PDT) - Fixed regular expression in FTP.ls to grab deep paths
 * Jun 21, 2014 12:16pm(PDT) - FTP.put will now return error if the local file is not found
