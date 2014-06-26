@@ -14,6 +14,8 @@ things like KeepAlive and cue rescheduling option on failure.
 
 Updates
 -------
+* Jun 26, 2014 7:41am(PDT) - Methods can now be passed a runNow parameter, to bypass cueing
+* Jun 23, 2014 8:24pm(PDT) - Restructured cues to work within FTP.run
 * Jun 23, 2014 7:46am(PDT) - Fixed a cueing issue with mkdir
 * Jun 22, 2014 5:20am(PDT) - FTP.mkdir and FTP.rmdir both have the option to recursively create and delete directories.
 * Jun 21, 2014 3:43pm(PDT) - Fixed regular expression in FTP.ls to grab deep paths
