@@ -14,6 +14,7 @@ things like KeepAlive and cue rescheduling option on failure.
 
 Updates
 -------
+* July 1, 2014 6:44am(PDT) - FTP.put method will no longer prioritize put requests. Execution is now linear.
 * Jun 26, 2014 7:41am(PDT) - Methods can now be passed a runNow parameter, to bypass cueing
 * Jun 23, 2014 8:24pm(PDT) - Restructured cues to work within FTP.run
 * Jun 23, 2014 7:46am(PDT) - Fixed a cueing issue with mkdir
