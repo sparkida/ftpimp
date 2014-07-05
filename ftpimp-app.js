@@ -242,7 +242,7 @@ var cueHolding = false,
             method = command.split(' ', 1)[0],
             bind = function (name) {
                 that[name.slice(1)] = function () {
-                    console.log('calling : ' + name + ' > ' + command, arguments);
+                    dbg('calling : ' + name + ' > ' + command, arguments);
                     that[name].apply(that, arguments);
                 };
             };
@@ -354,7 +354,11 @@ exeProto._pipeTransfer = function (data) {
     }
     ftp.pipe.once('end', function () {
         that.callback.call(that.callback, null, data);
-        //checkProc();
+        /*
+        if ( ! that.holdCue) {
+            that.checkProc();
+        }
+        */
     });
 };
 
@@ -461,6 +465,7 @@ proto.cue = {//{{{
             ftp.cue.processing = true;
             dbg('Cue> Loaded...running');
             ftp.cue.currentProc = ftp.cue._cue.shift();
+            dbg(ftp.cue.currentProc.toString());
             if ( ! ftp.error) {
                 ftp.cue.currentProc.call(ftp.cue.currentProc);
             }
@@ -552,7 +557,7 @@ proto.SimpleCue = SimpleCue = (function (command) {//{{{
                     }
                 };
             dbg(('SimpleCue::' + command + '> Opening data port').cyan);
-            ftp.openDataPort(portHandler, overRunNow === undefined ? cur.runNow : overRunNow);
+            ftp.openDataPort(portHandler, overRunNow === undefined ? cur.runNow : overRunNow, cur.holdCue);
         },
         runCueNow = function (runNow) {
             runCue(true);
@@ -569,11 +574,13 @@ proto.SimpleCue = SimpleCue = (function (command) {//{{{
          * scenarios wherein the process is part of a running cue and you need to perform an ftp
          * action prior to the {@link FTP#Events#endproc} event firing and execing the next cue.
          */
-        cueManager = function (filepath, callback, runNow) {
+        cueManager = function (filepath, callback, runNow, holdCue) {
             id = new Date().getTime() + '-' + Math.floor((Math.random() * 1000) + 1);
             cue[id] = {
                 callback: callback,
-                filepath: filepath
+                filepath: filepath,
+                runNow: runNow,
+                holdCue: holdCue
             };
             cueIndex.push(id);
             if ( ! running) {
@@ -884,15 +891,17 @@ proto.put = (function () {//{{{
                         dbg('---data piped--- running STOR');
                         ftp.once('dataTransferComplete', function () {
                             dbg('data transfer complete');
-                            ftp.emit('endproc');
+                            if (!curCue.holdCue) {
+                                ftp.emit('endproc');
+                            }
                             running = false;
                         });
-
+    
                         //send command through command socket to stor file immediately
-                        ftp.run('STOR ' + remotePath, function () {
+                        ftp.raw('STOR ' + remotePath, function () {
                             dbg('-----exec callback'.green);
                             callback.call(callback, null, remotePath);
-                        }, true);
+                        });
                         //ftp.emit('endproc');
                         //runCue();
 
@@ -907,7 +916,7 @@ proto.put = (function () {//{{{
         };
         
     
-    return function (paths, callback, runNow) {
+    return function (paths, callback, runNow, holdCue) {
         //todo add unique id to string
         var isString = typeof paths === 'string',
             id = new Date().getTime() + '_' + Math.floor(Math.random() * 1000 + 1),
@@ -941,7 +950,8 @@ proto.put = (function () {//{{{
                     callback: callback,
                     data: err,
                     path: false,
-                    runNow: runNow
+                    runNow: runNow,
+                    holdCue: holdCue
                 };
             } else {
                 dbg('>cueing file: "' + localPath + '" to "' + remotePath + '"');
@@ -949,7 +959,8 @@ proto.put = (function () {//{{{
                     callback: callback,
                     data: filedata,
                     path: remotePath,
-                    runNow: runNow
+                    runNow: runNow,
+                    holdCue: holdCue
                 };
             }            
             runCue(cue);
