@@ -414,6 +414,9 @@ proto.run = function (command, callback, runNow, holdCue) {//{{{
         that = this,
         callbackConstruct = function () {
             dbg('Run> running callbackConstruct'.yellow + ' ' + command);
+            if (command === 'QUIT') {
+                ftp.cue.reset();
+            }
             //var cueInstance = 
             ExeCue.create(command, callback, runNow, holdCue);
         };
@@ -448,6 +451,10 @@ proto.run = function (command, callback, runNow, holdCue) {//{{{
 proto.cue = {//{{{
     _cue: [],
     processing: false,
+    reset: function () {
+        //...resets the cue
+        ftp.cue._cue = [];
+    },
     register: function (callback, prependToCue) {
         dbg('Cue> Registering callback...');
         dbg(ftp.cue.processing);
@@ -475,9 +482,13 @@ proto.cue = {//{{{
         }
     }
 };
+
+
 proto.on('endproc', function () {
     dbg('Event> endproc'.magenta);
 });
+
+
 proto.on('endproc', proto.cue.run);//}}}
 
 
@@ -1034,13 +1045,32 @@ proto.mkdir = function (dirpath, callback, recursive) {//{{{
         };
     //hijack mkdirHandler
     if (recursive) {
-        var paths = dirpath.split(path.sep).filter(Boolean),
+        //check if path provided starts with root /
+        var isRoot = (dirpath.charAt(0) === path.sep),
+            paths = dirpath.split(path.sep).filter(Boolean),
             pathsLength = paths.length,
             cur = '',
             created = [],
             i = 0,
+            makeNext = function () {
+                var index = i;
+                i += 1;
+                cur += paths[index] + path.sep;
+                if (index === pathsLength - 1) {
+                    dbg('ending recursion'.red);
+                    ftp.run('MKD ' + (isRoot ? path.sep : '') + cur, endRecursion, true);
+                } else {
+                    ftp.run('MKD ' + (isRoot ? path.sep : '') + cur, continueMake, index !== 0, true);
+                }
+            },
+            continueMake = function (err, data) {
+                addPaths(err, data);
+                makeNext();
+            },
             addPaths = function (err, data) {
+                dbg(('adding path:'+ data).blue);
                 if ( ! err) {
+                    data = data.match(/"(.*)"/)[1];
                     created.push(data);
                 }
             },
@@ -1048,15 +1078,7 @@ proto.mkdir = function (dirpath, callback, recursive) {//{{{
                 addPaths(err, data);
                 callback.call(callback, err, created);
             };
-
-        for(i; i < pathsLength; i++) {
-            cur += path.sep + paths[i];
-            if (i === pathsLength - 1) {
-                ftp.mkdir(cur, endRecursion);
-            } else {
-                ftp.mkdir(cur, addPaths);
-            }
-        }
+        makeNext();
     } else {
         ftp.run('MKD ' + dirpath, mkdirHandler);
     }
@@ -1553,7 +1575,7 @@ proto.port = function (port, callback) {ftp.run('PORT ' + port, callback);};
  * @function FTP#quit
  * @param {function} callback - The callback function to be issued.
  */
-proto.quit = function (callback) {ftp.run('QUIT', callback);};
+proto.quit = function (callback, runNow, holdCue) {ftp.run('QUIT', callback, runNow, holdCue);};
 
 
 /**

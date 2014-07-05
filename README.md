@@ -1,20 +1,23 @@
 
-FTPimp
+FTPimp V0.5.0 - stable!
 ======
 An improved implementation of the FTP service API for NodeJS.
-**Be sure to update as we our in Beta** and for the next week or
-so every update will address important fixes.
+**Everything has been greatly improved at this point.**
 
-I'm in the process of adding automation to this FTP module,
-certain functions like get, put, save, rmdir, mkdir already exist,
-and I will continue adding / improving them. For the next few
-updates I will be more focused on the control of the connection,
-things like KeepAlive and cue rescheduling option on failure.
+I have a working implementation of FTPimp in a file synchronization manager, built for developers in rapid release / multi-project scenarios, that I'll be releasing within the week to demonstrate.
 
+* Most issues will likely be the result of a lack in documentation, which I'm working on and will be updating shortly
+    - by default, FTPimp uses passive connections, this can be changed; **actually FTPimp is OOP, you can override everything to your liking pretty quickly and easily.**
+    - every cue runs on the same level the command was executed in and each cued command has the ability to group a series of commands into a single cue, this allows you to chain methods for building procedures such as the recursive mkdir procedure, which does exactly what it says: recurses through the FTP.mkdir command in a single cue.
+
+**Be sure to update as we are in Beta**
 
 Updates
 -------
-* July 1, 2014 6:44am(PDT) - FTP.put method will no longer prioritize put requests. Execution is now linear.
+* July 5, 2014 8:36am(PDT) - FTP.mkdir will now make recursive directories within the same cue group. Cue groups are a new feature as of **V0.5.0**
+* July 4, 2014 9:15pm(PDT) - **Major Update** Beta v0.5.0 **stable**
+    - The primary cue that runs all methods - **(FTP.run)** - now provides full control over how you cue your processes with the use of two parameters <br>**runNow** - to run the next command immediately <br>&<br>**cueGroup** - this tells FTP.run that the command belongs to a cue group and which will escape the **endproc** that loads and fires the next cue in line. Cue groups are one level deep and exist until a command is used where the **cueGroup** parameter is false.
+* July 1, 2014 6:44am(PDT) - FTP.put method will no longer prioritize put requests. Execution order is now linear.
 * Jun 26, 2014 7:41am(PDT) - Methods can now be passed a runNow parameter, to bypass cueing
 * Jun 23, 2014 8:24pm(PDT) - Restructured cues to work within FTP.run
 * Jun 23, 2014 7:46am(PDT) - Fixed a cueing issue with mkdir
