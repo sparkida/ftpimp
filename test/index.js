@@ -1,7 +1,7 @@
 /*
  * The FTPimp testing suite
  * (c) 2014 Nicholas Riley, Sparkida. All Rights Reserved.
- * @module test/ftp
+ * @module test/index
  */
 
 //TODO - change to main
@@ -9,7 +9,7 @@ var FTP = require('../ftpimp-app'),
     config = require('./config.json'),
     /**create new FTP instance connection
      * and login are automated */
-    ftp = FTP.create(config),
+    ftp = FTP.create(config, false),
     Test = function () {
         var args = [],
             i = 0,
@@ -51,12 +51,12 @@ Test.prototype.testSuccess = function (err, data) {
 };
 
 
+//change to fake directory for error, then change to root for success
 register('chdir', 'fooError', '');
 
 
 
-
 ftp.events.on('testModuleExec', launchTest);
-ftp.events.on('ready', init);
+ftp.connect(init);
 
 
