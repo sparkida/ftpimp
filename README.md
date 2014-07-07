@@ -14,6 +14,7 @@ I have a working implementation of FTPimp in a file synchronization manager, bui
 
 Updates
 -------
+* July 7, 2014 8:46am(PDT) - Fixed a cueing issue that occured when recursively removing directories using **FTP.rmdir**.
 * July 7, 2014 6:46am(PDT) - Fixed an issue that occurred when receiving data through ls, lsnames.
 * July 5, 2014 8:36am(PDT) - FTP.mkdir will now make recursive directories within the same cue group. Cue groups are a new feature as of **V0.5.0**
 * July 4, 2014 9:15pm(PDT) - **Major Update** Beta v0.5.0 **stable**

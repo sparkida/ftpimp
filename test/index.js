@@ -113,22 +113,48 @@ Test.prototype.testSuccess = function (err, data) {
     this.pass.success = (null === err && null !== data);
 };
 
+Test.end = function () {
+    Test.create = function(){};
+    Test.run();
+    Test.run = function () {};
+};
 
-var buildTests = function () {
+
+Test.buildTests = function () {
     //test success, then error when applicable
     Test.create('chdir', '', 'fooError');
-    Test.create('getcwd');
     //will fail at making root
-    Test.create('mkdir', 'foo' + String(new Date().getTime()), '');
+    var testDir = 'foo' + String(new Date().getTime());
+    Test.create('mkdir', testDir, '');
     Test.create('ls', '', 'fooError');
     Test.create('lsnames', '', 'fooError');
+    Test.create('rmdir', testDir, 'fooError');
+    Test.end();
+    Test.create('put', 'index.js', 'foo');
+    Test.create('rename', ['index.js', 'ind.js'], ['index.js', 'foo.js']);
+    Test.create('get', 'ind.js', 'fooError');
+    Test.create('save', ['ind.js', 'saved_ind.js'], 'fooError');
+    Test.create('filemtime', 'ind.js', 'fooError');
+    Test.create('unlink', 'ind.js', 'fooError');
+    Test.create('run', 'NOOP');
+
+
+    Test.create('root');
+    Test.create('getcwd');
+    Test.create('site');
+    Test.create('stat');
+    Test.create('info');
+    Test.create('ping');
+
+
+    Test.create('quit');
     Test.run();
 };
 
 
 
 
-ftp.connect(buildTests);
+ftp.connect(Test.buildTests);
 ftp.on('testComplete', Test.run);
 
 

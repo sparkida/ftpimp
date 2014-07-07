@@ -234,9 +234,7 @@ proto.init = function () {//{{{
 };//}}}
 
 
-var cueHolding = false,
-    cueHoldSet = false,
-    ExeCue = function (command, callback, runNow, holdCue) {
+var ExeCue = function (command, callback, runNow, holdCue) {
         var that = this,
             n,
             method = command.split(' ', 1)[0],
@@ -248,12 +246,8 @@ var cueHolding = false,
             };
         that.command = command;
         that.method = method;
-        if (cueHoldSet) {
-            that.holdCue = true;
-        } else if (holdCue) {
-            that.holdCue = holdCue;
-            cueHoldSet = true;
-        }
+        that.pipeData = null;
+        that.holdCue = holdCue;
         that.callback = callback;
         that.runNow = runNow;
         handle.data.waiting = true;
@@ -280,8 +274,6 @@ ExeCue.create = function (command, callback, runNow, holdCue) {
 //end the cue
 exeProto._end = function () {
     var that = this;
-    cueHolding = false;
-    cueHoldSet = false;
     that.checkProc();
 };
 
@@ -297,11 +289,17 @@ exeProto._checkProc = function () {
 };
 
 
-exeProto._pipeData = function (data) {
-    var that = this;
+exeProto._closePipe = function () {
+    var that = this,
+        data = that.pipeData;
+    try {
+        ftp.pipe.removeListener('data', that.receiveData);
+    } catch (dataNotBoundError) {
+        dbg('data not bound: ', dataNotBoundError);
+    }
+    console.log(that.pipeData);
     if (null !== data) {
         dbg('ending transfer --- data received'.red);
-        dbg(that.pipeData);
         that.callback.call(that.callback, null, data.toString());
     } else {
         dbg('ending transfer --- should be no data'.red);
@@ -315,10 +313,20 @@ exeProto._responseHandler = function (code, data) {
     var that = this;
     //dbg('pipe is ' + (ftp.pipeClosed ? 'closed' : 'open'));
     if (code[0] === '5') {
+        dbg('handling error');
+        dbg(that);
         //if we have an open pipe, wait for it to end
         //if (ftp.pipeClosed) {
         //end immediately
-        that.callback.call(that.callback, data, null);
+        try {
+            ftp.pipe.removeListener('data', that.receiveData);
+            ftp.pipe.removeListener('end', that.closePipe);
+            ftp.pipe.destroy();
+        } catch (dataNotBoundError) {
+            dbg('data not bound: ', dataNotBoundError);
+        }
+
+        that.callback.call(that.callback, Error(data), null);
         that.checkProc();
     }
     else if (code === '150') {
@@ -327,10 +335,11 @@ exeProto._responseHandler = function (code, data) {
             if (ftp.pipeClosed) {
                 dbg('pipe already closed'.yellow);
                 ftp.pipeClosed = false;
-                that.endTransfer();
+                that.closePipe();
                 return;
             }
-            ftp.pipe.once('end', that.pipeData);
+            ftp.pipe.once('end', that.closePipe);
+            ftp.pipe.once('data', that.receiveData);
         }
     } 
     else {
@@ -342,8 +351,23 @@ exeProto._responseHandler = function (code, data) {
 };
 
 
+exeProto._receiveData = function (data) {
+    var that = this;
+    that.pipeData = data.toString();
+    try {
+        ftp.pipe.removeListener('end', that.closePipe);
+    } catch (endNotBoundError) {
+        dbg('end not bound: ', endNotBoundError);
+    }
+    that.closePipe();
+};
+
+
 //run command next in cue
 proto.runNext = function (command, callback, runNow, holdCue) {//{{{
+    runNow = runNow === undefined ? false : runNow;
+    holdCue = holdCue === undefined ? false : holdCue;
+
     var dataHandler,
         that = this,
         callbackConstruct = function () {
@@ -351,8 +375,6 @@ proto.runNext = function (command, callback, runNow, holdCue) {//{{{
             //var cueInstance = 
             ExeCue.create(command, callback, runNow, holdCue);
         };
-
-    runNow = runNow === undefined ? false : runNow;
 
     if (undefined === command) { //TODO || cmd.allowed.indexOf(command.toLowerCase) {
         throw new Error('ftp.run > parameter 1 expected command{string}');
@@ -650,12 +672,10 @@ handle.data = function (data) {//{{{
         code,
         i,
         end = function () {
-            dbg('----handle waiting ? end');
-            dbg(handle.data.waiting);
+            dbg('handle.data.waiting: ' + handle.data.waiting);
             if (handle.data.waiting) {
                 dbg('handle.data.waiting:: ' + code + ' ' + strData);
                 if ( ! handle.data.start) {
-                    dbg(1111);
                     handle.data.waiting = false;
                     /*if (code === '150') {
                         dbg('holding for data transfer'.yellow);
@@ -663,7 +683,6 @@ handle.data = function (data) {//{{{
                     ftp.emit('response', code, strData);
                     //}
                 } else {
-                    dbg(2222);
                     handle.data.waiting = true;
                     handle.data.start = false;
                 }
@@ -689,7 +708,6 @@ handle.data = function (data) {//{{{
     dbg(('\n>>>\n' + strData + '\n>>>\n').grey);
     strData = strData.split('\n');
     strParts = strData.length;
-    
 
     for (i = 0; i < strParts; i++) {
         code = strData[i].substr(0, 3);
@@ -709,8 +727,7 @@ handle.data = function (data) {//{{{
         strData = commandData[code].trim();
         dbg('------------------');
         dbg('CODE  -> ' + code);
-        dbg('DATA -> ');
-        dbg(strData);
+        dbg('DATA -> ' + strData);
         dbg('------------------');
         run();
     }
@@ -1022,7 +1039,9 @@ proto.mkdir = function (dirpath, callback, recursive) {//{{{
             if ( ! err) {
                 data = data.match(/"(.*)"/)[1];
             }
-            callback.call(callback, err, data);
+            if (typeof callback === 'function') {
+                callback.call(callback, err, data);
+            }
         };
     //hijack mkdirHandler
     if (recursive) {
@@ -1037,6 +1056,15 @@ proto.mkdir = function (dirpath, callback, recursive) {//{{{
                 var index = i;
                 i += 1;
                 cur += paths[index] + path.sep;
+
+                console.log('++++++++++');
+                console.log('++++++++++');
+                console.log('++++++++++');
+                console.log('++++++++++');
+                console.log('++++++++++');
+                console.log('++++++++++');
+                console.log(index, pathsLength);
+
                 if (index === pathsLength - 1) {
                     dbg('ending recursion'.red);
                     ftp.run('MKD ' + (isRoot ? path.sep : '') + cur, endRecursion, true);
@@ -1049,15 +1077,17 @@ proto.mkdir = function (dirpath, callback, recursive) {//{{{
                 makeNext();
             },
             addPaths = function (err, data) {
-                dbg(('adding path:'+ data).blue);
                 if ( ! err) {
+                    dbg(('adding path:'+ data).blue);
                     data = data.match(/"(.*)"/)[1];
                     created.push(data);
                 }
             },
             endRecursion = function (err, data) {
                 addPaths(err, data);
-                callback.call(callback, err, created);
+                if (typeof callback === 'function') {
+                    callback.call(callback, err, created);
+                }
             };
         makeNext();
     } else {
@@ -1072,54 +1102,61 @@ proto.mkdir = function (dirpath, callback, recursive) {//{{{
  * @param {function} callback - The callback function to be issued.
  * @param {string} recursive - Recursively delete files and subfolders.
  */
-proto.rmdir = function (dirpath, callback, recursive) {//{{{
+proto.rmdir = function (dirpath, callback, recursive, runNow, holdCue) {//{{{
     recursive = recursive === undefined ? false : recursive;
-    ftp.run('RMD ' + dirpath, function (err, data) {
-        if ( ! err) {
-            data = data.length > 0;
-            callback.call(callback, err, data);
-        } else {
-            dbg('directory not empty'.red)
-            //recurse
-            //TODO - switch to ls
-            ftp.ls(dirpath, function (err, data) {
-                dbg('names recvd'.green);
-                //dbg(data);
+    var checkDir = function (err, data) {
+            if (undefined === recursive || ! recursive) {
                 if ( ! err) {
-                    var i = 0,
-                        method = '',
-                        mainData = data,
-                        unlinkHandler = function (index, end) {
-                            return function (err) {
-                                if (err) {
-                                    dbg('error unlink file: '.red + mainData[index].filename);
-                                } else {
-                                    dbg('file unlinked: '.red + mainData[index].filename);
-                                }
-                                if (end) {
-                                    dbg('attempting to delete final'.red);
-                                    ftp.raw('RMD ' + dirpath, callback);
-                                }
-                            }
-                        };
-                    for (i; i < data.length; i++) {
-                        if (data[i].filename === '.' || data[i].filename === '..') {
-                            continue;
-                        }
-                        if (data[i].isDirectory) {
-                            method = 'rmdir';                                
-                        } else {
-                            method = 'unlink';
-                        }
-                        ftp[method](path.join(dirpath, data[i].filename), unlinkHandler(i, i === data.length - 1));
-                    }
+                    data = data.length > 0;
                 }
-                //callback.call(callback, err, data);
-            });
-        }
-    });
+                callback.call(callback, err, data);
+            } else {
+                dbg('directory not empty'.red)
+                //recurse
+                //TODO - switch to ls
+                ftp.ls(dirpath, function (err, data) {
+                    if ( ! err) {
+                        var i = 0,
+                            method = '',
+                            mainData = data,
+                            unlinkHandler = function (index, end) {
+                                return function (err) {
+                                    if (err) {
+                                        dbg('error unlink file: '.red + mainData[index].filename);
+                                    } else {
+                                        dbg('file unlinked: '.red + mainData[index].filename);
+                                    }
+                                    if (end) {
+                                        dbg('attempting to delete final'.red);
+                                        ftp.run('RMD ' + dirpath, callback, true);
+                                    }
+                                }
+                            };
+                        //must be a directory?
+                        if (data.length === 0) {
+                        }
+
+                        for (i; i < data.length; i++) {
+                            if (data[i].filename === '.' || data[i].filename === '..') {
+                                continue;
+                            }
+                            if (data[i].isDirectory) {
+                                //recursively remove the next directory while running immediately and holding the cue
+                                ftp.runNext('RMD ' + path.join(dirpath, data[i].filename), checkDir, true, false, true);
+                            } else {
+                                ftp.runNext(ftp.unlink.raw + ' ' + path.join(dirpath, data[i].filename), unlinkHandler(i, i === data.length - 1), false, true);
+                            }
+                        }
+                    }
+                    //callback.call(callback, err, data);
+                });
+            }
+        };
+    ftp.run('RMD ' + dirpath, checkDir, runNow, holdCue);
 };//}}}
 
+
+proto.rmdir.raw = 'RMD';
 
 /**
  * Runs the FTP command PWD - Print Working Directory
@@ -1137,6 +1174,7 @@ proto.getcwd = function (callback) {//{{{
 };//}}}
 
 
+proto.getcwd.raw = 'PWD';
 /**
  * Runs the FTP command CWD - Change Working Directory
  * @function FTP#chdir
@@ -1155,6 +1193,9 @@ proto.chdir = function (dirname, callback) {//{{{
 };//}}}
 
 
+proto.chdir.raw = 'CWD';
+
+
 /**
  * Runs the FTP command DELE - Delete remote file
  * @function FTP#unlink
@@ -1171,6 +1212,8 @@ proto.unlink = function (filepath, callback, runNow) {//{{{
     });
 };//}}}
 
+
+proto.unlink.raw = 'DELE';
 
 /**
  * Runs the FTP command ABOR - Abort a file transfer
@@ -1421,7 +1464,7 @@ StatObject.values = {//{{{
 
 SimpleCue.registerHook('LIST', function (data) {//{{{
     if (null === data) {
-        return [];
+        return false;
     }
     console.log('ftpimp> ' + 124812);
     console.log(data);
@@ -1451,6 +1494,9 @@ proto.ls = SimpleCue.create('LIST');
 
 
 SimpleCue.registerHook('MDTM', function (data) {//{{{
+    if (null === data) {
+        return false;
+    }
     data = data.match(/([0-9]{4})([0-9]{2})([0-9]{2})([0-9]{2})([0-9]{2})([0-9]{2})/);
     return Date.parse(data[1] + '-' + data[2] + '-' + data[3] + ' ' 
         + data[4] + ':' + data[5] + ':' + data[6]);
@@ -1480,7 +1526,7 @@ proto.filemtime = SimpleCue.create('MDTM');
 
 SimpleCue.registerHook('NLST', function (data) {//{{{
     if (null === data) {
-        return [];
+        return false;
     }
     var filter = function (elem) {
             return elem.length > 0 && elem !== '.' && elem !== '..';
