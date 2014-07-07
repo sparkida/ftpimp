@@ -1,5 +1,5 @@
 
-FTPimp V0.5.0 - stable!
+FTPimp V0.5.2 - stable!
 ======
 An improved implementation of the FTP service API for NodeJS.
 **Everything has been greatly improved at this point.**
@@ -14,6 +14,7 @@ I have a working implementation of FTPimp in a file synchronization manager, bui
 
 Updates
 -------
+* July 7, 2014 6:46am(PDT) - Fixed an issue that occurred when receiving data through ls, lsnames.
 * July 5, 2014 8:36am(PDT) - FTP.mkdir will now make recursive directories within the same cue group. Cue groups are a new feature as of **V0.5.0**
 * July 4, 2014 9:15pm(PDT) - **Major Update** Beta v0.5.0 **stable**
     - The primary cue that runs all methods - **(FTP.run)** - now provides full control over how you cue your processes with the use of two parameters <br>**runNow** - to run the next command immediately <br>&<br>**cueGroup** - this tells FTP.run that the command belongs to a cue group and which will escape the **endproc** that loads and fires the next cue in line. Cue groups are one level deep and exist until a command is used where the **cueGroup** parameter is false.

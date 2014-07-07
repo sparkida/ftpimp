@@ -296,16 +296,17 @@ exeProto._checkProc = function () {
     }
 };
 
-exeProto._endTransfer = function () {
-    dbg('ending transfer --- should be no data'.red);
+
+exeProto._pipeData = function (data) {
     var that = this;
-    try {
-        ftp.pipe.removeListener('data', that.pipeTransfer);
-    } catch (pipeError2) {
-        dbg('<pipeTransfer not set>'.yellow);
+    if (null !== data) {
+        dbg('ending transfer --- data received'.red);
+        dbg(that.pipeData);
+        that.callback.call(that.callback, null, data.toString());
+    } else {
+        dbg('ending transfer --- should be no data'.red);
+        that.callback.call(that.callback, Error('No data transfered'), null);
     }
-    that.callback(null, null);
-    //checkProc();
 };
 
 
@@ -329,37 +330,15 @@ exeProto._responseHandler = function (code, data) {
                 that.endTransfer();
                 return;
             }
-            ftp.pipe.once('end', that.endTransfer);
-            ftp.pipe.once('data', that.pipeTransfer);
+            ftp.pipe.once('end', that.pipeData);
         }
     } 
     else {
-        dbg(that);
         that.callback.call(that.callback, null, data);
         if (code !== '227') {
             that.checkProc();
         }
     }
-};
-
-
-exeProto._pipeTransfer = function (data) {
-    var that = this;
-    data = data.toString();
-    dbg('---> closing pipe --->'.red);
-    try {
-        ftp.pipe.removeListener('end', that.endTransfer);
-    } catch (pipeError1) {
-        dbg('<endTransfer not set>'.yellow);
-    }
-    ftp.pipe.once('end', function () {
-        that.callback.call(that.callback, null, data);
-        /*
-        if ( ! that.holdCue) {
-            that.checkProc();
-        }
-        */
-    });
 };
 
 
@@ -727,7 +706,7 @@ handle.data = function (data) {//{{{
     dbg(commandCodes.join(', ').grey);
     for (i = 0; i < commandCodes.length; i++) {
         code = commandCodes[i];
-        strData = commandData[code];
+        strData = commandData[code].trim();
         dbg('------------------');
         dbg('CODE  -> ' + code);
         dbg('DATA -> ');
@@ -979,7 +958,9 @@ proto.put = (function () {//{{{
         //TODO commands need to occur synchronously for the most part, we should
         //make something to read an array of file put commands, or the option
         //to run a cue for all puts in that scope's level
-        ftp.cue.register(function () {fs.readFile(localPath, pipeFile);});
+        ftp.cue.register(function () {
+            fs.readFile(localPath, pipeFile);
+        });
     }
 }());//}}}
 
@@ -1442,7 +1423,8 @@ SimpleCue.registerHook('LIST', function (data) {//{{{
     if (null === data) {
         return [];
     }
-    
+    console.log('ftpimp> ' + 124812);
+    console.log(data);
     dbg(data.grey);
     data = data.split('\r\n').filter(Boolean);
     var i = 0,

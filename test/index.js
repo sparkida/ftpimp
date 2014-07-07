@@ -10,53 +10,125 @@ var FTP = require('../ftpimp-app'),
     /**create new FTP instance connection
      * and login are automated */
     ftp = FTP.create(config, false),
-    Test = function () {
-        var args = [],
-            i = 0,
-            argLength = arguments.length,
-            test = this;
+    Test = function (testName, args) {
+        var test = this;
+        test.testName = testName;
+        test.args = args;
+        test.pass = {
+            success: false
 
-        console.log(arguments);
-
-        for (i; i < argLength; i++) {
-            args.push(arguments[i]);
-        }
-        
-        testName = args.splice(0, 1)[0];
-
-        for (i = 0; i < 2; i++) {
-            console.log(args);
-            ftp[testName].apply(ftp, 
-                    args[i].concat(i === 0 
-                        ? test.testError : test.testSuccess));
-        }
+        };
+        test.results = {
+            success: null
+        };
                 
     },
     cue = {},
     cueIndex = [],
-    register = function () {
-        cue[testName] = Test.create(arguments);
-    };
+    tests = [],
+    //pool of created test instances
+    pool = {};
 
-Test.create = function (testName) { 
-    return new Test(testName, arguments);
+
+Test.exe = function () {
+    var test = this,
+        errFunc, 
+        successFunc = function (err, data) {
+            test.testSuccess.call(test, err, data);
+            ftp.emit('testComplete');
+        },
+        args = test.args,
+        testName = test.testName,
+        argLength = args.length;
+
+    //for commands that don't have directly correlated errors
+    console.log('Executing Test: ' + testName);
+    if (undefined === args || argLength === 0) {
+        ftp[testName].call(ftp, successFunc);
+    } else {
+        if (argLength > 1) {
+            test.results.error = null;
+            test.pass.error = false;
+            successThenErr = function (err, data) {
+                test.testSuccess.call(test, err, data);
+                ftp[testName].call(ftp, args[1], function (err) { 
+                    test.testError.call(test, err);
+                    ftp.emit('testComplete');
+                });
+            };
+            //one for success, one for fail
+            ftp[testName].call(ftp, args[0], successThenErr);
+        }
+    }
 };
+
+
+Test.run = function () {
+    if (cueIndex.length === 0) {
+        console.log('--- Testing Complete ---');
+        var i = 0;
+        for (i; i < tests.length; i++) {
+            console.log(tests[i] + ': ', cue[tests[i]].pass);
+            //console.log(tests[i] + ': ', cue[tests[i]].results);
+        }
+        return;
+    }
+    var testName = cueIndex.shift(),
+        args = cue[testName];
+    console.log('Running Test: ' + testName);
+    pool[testName] = Test.exe.call(cue[testName]);
+};
+
+
+Test.create = function () { 
+    var i = 0,
+        args = [],
+        argLength = arguments.length,
+        testName;
+    for(i; i < argLength; i++) {
+        args.push(arguments[i]);
+    }
+    testName = args.shift();
+    //cue registered tests until connected
+    cue[testName] = Test.build(testName, args);
+    cueIndex.push(testName);
+    tests.push(testName);
+    console.log('Test Created: ' + testName, args);
+};
+
+
+Test.build = function (testName, args) {
+    return new Test(testName, args);
+};
+
 
 Test.prototype.testError = function (err) {
-    return null !== err;
+    this.results.error = /*[this.testName, 'error',*/ err/*]*/;
+    this.pass.error = (null !== err);
 };
+
 
 Test.prototype.testSuccess = function (err, data) {
-    return null === err && null !== data;
+    this.results.success = /*[this.testName, 'success', err,*/ data/*]*/;
+    this.pass.success = (null === err && null !== data);
 };
 
 
-//change to fake directory for error, then change to root for success
-register('chdir', 'fooError', '');
+var buildTests = function () {
+    //test success, then error when applicable
+    Test.create('chdir', '', 'fooError');
+    Test.create('getcwd');
+    //will fail at making root
+    Test.create('mkdir', 'foo' + String(new Date().getTime()), '');
+    Test.create('ls', '', 'fooError');
+    Test.create('lsnames', '', 'fooError');
+    Test.run();
+};
 
 
 
-ftp.events.on('testModuleExec', launchTest);
-ftp.connect(init);
+
+ftp.connect(buildTests);
+ftp.on('testComplete', Test.run);
 
 
