@@ -128,16 +128,9 @@ Test.end = function () {
 
 Test.buildTests = function () {
 
+
     Test.create('ls', '', 'fooError');
     Test.create('lsnames', '', 'fooError');
-    Test.end();
-    Test.create('ls', '', 'fooError');
-    Test.create('lsnames', '', 'fooError');
-    Test.create('ls', '', 'fooError');
-    Test.create('lsnames', '', 'fooError');
-    Test.create('ls', '', 'fooError');
-    Test.create('lsnames', '', 'fooError');
-    Test.end();
     //test success, then error when applicable
     Test.create('chdir', '', 'fooError');
     //will fail at making root

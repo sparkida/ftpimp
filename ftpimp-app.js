@@ -290,6 +290,7 @@ exeProto._checkProc = function () {
 
 
 exeProto._closePipe = function () {
+    console.log('closing.....'.red);
     var that = this,
         data = that.pipeData;
     try {
@@ -325,9 +326,8 @@ exeProto._responseHandler = function (code, data) {
         } catch (dataNotBoundError) {
             dbg('data not bound: ', dataNotBoundError);
         }
-
-        that.callback.call(that.callback, Error(data), null);
         that.checkProc();
+        that.callback.call(that.callback, Error(data), null);
     }
     else if (code === '150') {
         if (that.method !== 'STOR') {
@@ -343,15 +343,17 @@ exeProto._responseHandler = function (code, data) {
         }
     } 
     else {
-        that.callback.call(that.callback, null, data);
         if (code !== '227') {
             that.checkProc();
         }
+        that.callback.call(that.callback, null, data);
     }
 };
 
 
 exeProto._receiveData = function (data) {
+    console.log('receiving......'.green);
+    
     var that = this;
     that.pipeData = data.toString();
     try {
@@ -437,6 +439,7 @@ proto.run = function (command, callback, runNow, holdCue) {//{{{
  * processes that would otherwise fail from concurrency.
  * This function is done automatically when using
  * the {@link FTP#run} method to cue commands.
+ * @fires FTP#cueEmpty
  * @member {object} FTP#cue
  * @property {array} cue._cue - Stores registered procedures
  * and holds them until called by the cue.run method
@@ -478,6 +481,11 @@ proto.cue = {//{{{
                 ftp.cue.currentProc.call(ftp.cue.currentProc);
             }
         } else {
+            /**
+             * Fired when the primary cue is empty
+             * @event FTP#cueEmpty
+             */
+            ftp.emit('cueEmpty');
             ftp.cue.processing = false;
             dbg('--cue empty--'.yellow);
         }
@@ -527,6 +535,7 @@ proto.on('endproc', proto.cue.run);//}}}
  * @constructor FTP#SimpleCue
  * @param {string} command - The command that will be issued ie: <b>"CWD foo"</b>
  * @returns {function} cueManager - The simple cue manager
+ * @TODO - make OO - double check endproc and then callback ? or callback and endproc
  */
 proto.SimpleCue = SimpleCue = (function (command) {//{{{
     var running = false,
@@ -555,7 +564,6 @@ proto.SimpleCue = SimpleCue = (function (command) {//{{{
             cue[curId] = null;
             delete cue[curId];
             var portHandler = function () {
-                    ftp.once('dataTransferComplete', runCueNow);
                     hook = undefined === that[command + 'Hook'] ? null : that[command + 'Hook'];
                     dbg('hook: ' + hook);
                     //hook data into custom instance function
@@ -574,6 +582,12 @@ proto.SimpleCue = SimpleCue = (function (command) {//{{{
         runCueNow = function (runNow) {
             runCue(true);
         },
+        disable = function () {
+            running = false;
+        },
+        init = true,
+        cueManager;
+
 
         /** 
          * The cue manager returned when creating a new {@link FTP#SimpleCue} object
@@ -584,9 +598,15 @@ proto.SimpleCue = SimpleCue = (function (command) {//{{{
          * @param {boolean} runNow - Run the command immediately. Careful, concurrent connections
          * will likely end in a socket error. This is meant for fine grained control over certain
          * scenarios wherein the process is part of a running cue and you need to perform an ftp
-         * action prior to the {@link FTP#Events#endproc} event firing and execing the next cue.
+         * action prior to the {@link FTP#endproc} event firing and execing the next cue.
          */
         cueManager = function (filepath, callback, runNow, holdCue) {
+            if (init) {
+                init = false;
+                ftp.on('dataTransferComplete', runCueNow);
+                ftp.on('transferError', disable);
+            }
+            dbg('SimpleCue> ' + command + ' > ' + filepath);
             id = new Date().getTime() + '-' + Math.floor((Math.random() * 1000) + 1);
             cue[id] = {
                 callback: callback,
@@ -1060,14 +1080,6 @@ proto.mkdir = function (dirpath, callback, recursive) {//{{{
                 i += 1;
                 cur += paths[index] + path.sep;
 
-                console.log('++++++++++');
-                console.log('++++++++++');
-                console.log('++++++++++');
-                console.log('++++++++++');
-                console.log('++++++++++');
-                console.log('++++++++++');
-                console.log(index, pathsLength);
-
                 if (index === pathsLength - 1) {
                     dbg('ending recursion'.red);
                     ftp.run('MKD ' + (isRoot ? path.sep : '') + cur, endRecursion, true);
@@ -1284,10 +1296,14 @@ proto.save = function (paths, callback) {//{{{
 
     dbg('>saving file: ' + remotePath + ' to ' + localPath);
 
-    var dataHandler = function (dataErr, data) {
-            fs.writeFile(localPath, data, function (err) {
+    var dataHandler = function (err, data) {
+            if (err) {
                 callback.call(callback, err, localPath);
-            });
+            } else {
+                fs.writeFile(localPath, data, function (err) {
+                    callback.call(callback, err, localPath);
+                });
+            }
         };
     
     ftp.get(remotePath, dataHandler);    
@@ -1651,6 +1667,7 @@ proto.rename = function (paths, callback) {//{{{
     ftp.run('RNFR ' + from, function (err, data) {
         if (err) {
             callback.call(callback, err, data);
+            ftp.emit('endproc');
         } else {
             //run rename to command immediately
             ftp.run('RNTO ' + to, callback, true);

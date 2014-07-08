@@ -1,19 +1,109 @@
 
-FTPimp V0.5.2 - stable!
+FTPimp V0.5.4 - stable!
 ======
 An improved implementation of the FTP service API for NodeJS.
+<br>
 **Everything has been greatly improved at this point.**
+<br>
+**Be sure to update as we are in Beta**
 
+
+API Documentation
+-----------------
+For a full breakdown of this API, including examples [&not;FTPimp.net](http://ftpimp.net)
+<br>
+Keep checking back, and don't forget to update to the newest version!
+
+
+Find a Bug?
+-----------
+Please let me know so that I can fix it ASAP, cheers 
+[&not;Report a Bug](https://github.com/sparkida/ftpimp/issues)
+
+
+Features
+--------
+- Recursively put files, and create directories
+- Recursively delete directories
+- UNIX and Windows
+- Optional, automated login
+- Overrideable methods
+- Node-like, event driven, process chain
+- Propietary Cue and helper methods for controlling flow
+  
+
+
+Additional Info
+---------------
 I have a working implementation of FTPimp in a file synchronization manager, built for developers in rapid release / multi-project scenarios, that I'll be releasing within the week to demonstrate.
 
 * Most issues will likely be the result of a lack in documentation, which I'm working on and will be updating shortly
     - by default, FTPimp uses passive connections, this can be changed; **actually FTPimp is OOP, you can override everything to your liking pretty quickly and easily.**
     - every cue runs on the same level the command was executed in and each cued command has the ability to group a series of commands into a single cue, this allows you to chain methods for building procedures such as the recursive mkdir procedure, which does exactly what it says: recurses through the FTP.mkdir command in a single cue.
 
-**Be sure to update as we are in Beta**
+
+
+Examples
+--------
+
+###Default config
+```javascript
+var config = {
+        host: 'localhost',
+        port: 21,
+        user: 'root',
+        pass: '',
+        debug: false
+    };
+```
+
+###Automatically login to FTP and run callback when ready
+```javascript
+var FTP = require('ftpimp'),
+    ftp = FTP.create(config),
+    connected = function () {
+        console.log('connected to remote FTP server');
+    };
+    
+ftp.events.once('ready', connected);
+```
+
+###Setup FTPimp and login whenever
+```javascript
+var FTP = require('ftpimp'),
+    ftp = FTP.create(config, false);
+
+//do some stuff...
+ftp.connect(function () {
+    console.log('Ftp connected');
+});
+```
+
+###Recursively create directories...and then delete them for fun!
+```javascript
+//create a temporary directory name
+var tempDir = 'foo' + String(new Date().getTime()),
+    recursive = true;
+
+ftp.mkdir(tempDir + '/some/deep/directory', function (err, data) {
+    if (err) {
+        console.log(err);
+    } else {
+        console.log('directories created: ', data);
+        //recursively delete our temporary directory
+        ftp.rmdir(tempDir, function (err, data) {
+            console.log(err, data);   
+        });
+    }
+}, recursive);
+```
+
+
+
 
 Updates
 -------
+* July 8, 2014 3:38am(PDT) - v0.5.42 - The primary Cue **FTP.cue** will now emit a **"cueEmpty"** event when the last item in the cue completes.
 * July 8, 2014 3:21am(PDT) - v0.5.4 - **FTP.rename** will return an error if the file is not found
 * July 7, 2014 8:46am(PDT) - Fixed a cueing issue that occured when recursively removing directories using **FTP.rmdir**.
 * July 7, 2014 6:46am(PDT) - Fixed an issue that occurred when receiving data through ls, lsnames.
@@ -34,250 +124,3 @@ Updates
     - Resolved all known issues with the cueing of commands and data transfers. Good to Go!
 * Jun 18, 2014 4:35am(PDT) - Fixed an issue with performing multiple data requests
 * Jun 18, 2014 10:35am(PDT) - Fixed an issue with the response handler failing at login 
-
-
-API Documentation
------------------
-For a full breakdown of this API, including examples: [FTPimp.net](http://ftpimp.net)
-Keep checking back, and don't forget to update to the newest version!
-
-
-Find a Bug?
------------
-Please let me know so that I can fix it ASAP, cheers. 
-[Report a Bug](https://github.com/sparkida/ftpimp/issues)
-
-
-Quick Start
------------
-
-
-```
-var FTP = require('ftpimp'),
-    ftp = FTP.create({
-        host: 'localhost',
-        port: 21,
-        user: 'root',
-        pass: '',
-        debug: false
-    }),
-    connected = function () {
-        console.log('connected to remote FTP server');
-    };
-    
-ftp.events.once('ready', connected);
-```
-
-
-Examples
---------
-
-### Recursively delete a directory
-```
-var recursive = true;
-ftp.rmdir('foo', function (err,data) {
-    if (!err) {
-        console.log('entire directory deleted');
-    }
-}, recursive);
-
-```
-
-### Get the size of a remote file
-```
-ftp.size('main/e1.txt', function (err, data) {
-    console.log(err, data);
-});
-```
-
-### Put multiple files to server
-```
-ftp.put(['test/testfile1.txt','main/t1.txt'], function (err, data) {
-    if ( ! err) {
-        console.log('file transfered: ' + data);
-    }
-});
-
-ftp.put(['test/testfile2.txt','main/testfile1.txt'], function (err, data) {
-    if ( ! err) {
-        console.log('file transfered: ' + data);
-    }
-});
-
-//Since files are cued asynchronously, use this event to detect
-//when all cued files have been transferred
-ftp.events.once('fileCueEmpty', function () {
-    console.log('All files transferred');
-});
-```
-
-### Put files to server and then rename both of them 
-```
-ftp.put(['test/testfile1.txt','main/t1.txt'], function (err, data) {
-    ftp.put(['test/testfile2.txt','main/testfile1.txt'], function (err, data) {
-        ftp.rename(['main/t1.txt', 'main/e1.txt'], function (err, data) {
-            if ( ! err) {
-                console.log('file renamed: ' + data);
-            }
-        });
-        ftp.rename(['main/testfile1.txt', 'main/21.txt'], function (err, data) {
-            if ( ! err) {
-                console.log('file renamed: ' + data);
-            }
-        });
-    });
-});
-```
-
-### Return an array of StatObjects listing files and directories
-```
-ftp.ls('main2', function (err, data) {
-    console.log(err, data);
-    ftp.ls('main2', function (err, data) {
-        console.log(err, data);
-    });
-});
-```
-
-### Return an array of file and directorie names found
-```
-ftp.lsnames('main', function (err, data) {
-    console.log(err, data);
-});
-
-```
-
-### Recursively delete directory and all files
-```
-ftp.mkdir('main2', function () {
-    ftp.mkdir('main2/test', function (err, data) {
-        ftp.put(['test/testfile1.txt','main2/t1.txt'], function (err, data) {
-            ftp.rmdir('main2', function (err, data) {
-                if (err) {
-                    console.log('+++++'.yellow);
-                    console.log(err.red);
-                } else { 
-                    console.log(data);
-                }
-            }, true);
-        });
-    });
-});
-
-```
-
-### Force Quit the FTP instance
-```
-ftp.quit(function (err, data) {
-   console.log(err, data);
-});
-```
-
-### Get the file's modification time
-```
-ftp.filemtime('main/testfile2.txt', function (err, data) {
-    console.log(err, data);
-});
-
-ftp.filemtime('main2/t1.txt', function (err, data) {
-    console.log(err, data);
-});
-
-```
-
-### Fetch a remote file from the server
-```
-ftp.get('main/testfile2.txt', function (err, file) {
-    console.log(err, file);
-});
-ftp.get('main/testfile1.txt', function (err, file) {
-    console.log(err, file);
-});
-
-```
-
-### Fetch a remote file from the server and save locally
-```
-ftp.save(['main/testfile2.txt', 'test/t2.txt'], function (err, filepath) {
-    console.log(err, filepath);
-});
-
-ftp.save(['main/testfile1.txt', 'test/t1.txt'], function (err, filepath) {
-    console.log(err, filepath);
-});
-
-```
-
-### Abort the current file transfer
-```
-ftp.abort(function (err, data) {
-    ftp.exit();
-});
-
-```
-
-### Delete file from the remote directory
-```
-ftp.unlink('main/tester/t2.txt', function (err, data) {
-    ftp.rmdir('main/tester', function (err, data) {
-        console.log(err, data);
-    });
-});
-```
-
-### Make a directory on the remote server
-```
-ftp.mkdir('tester', function () {
-    
-    ftp.put(['tests/testfile1.txt', 'tester/t1.txt'], function (err, data) {
-        if(err) {
-            console.log(err);
-            return;
-        }
-        console.log('######################---------------file 1 put to server'.green);
-    });
-    ftp.put(['tests/testfile2.txt', 'tester/t2.txt'], function (err, data) {
-        if (err) {
-            console.log('there was an error with file2');
-            return; 
-        }
-        console.log('######################---------------file 2 put to server'.green);
-        console.log(data);
-    });
-
-});
-```
-
-### Show FTP system information
-```
-ftp.sys(function (err, data) {
-    console.log(err, data);
-}); 
-```
-
-### Print working directory
-```
-ftp.run('PWD', function (err, data) {
-    console.log(err, data);
-});
-```
-
-### Run raw commands in a generic cue
-```
-ftp.run('CWD foo', function (err, data) {
-        if (err) {
-            console.log('could not change working directory');
-            console.log(err);
-            return;
-        }
-        console.log('directory changed');
-        console.log(data);
-    });
-
-ftp.run('SIZE main/foo', function (err, data) {
-    if (err) {
-        console.log('there was an error receiving the file');
-    }
-    console.log('size is: ' + data);
-});
-```
