@@ -872,9 +872,11 @@ proto.put = (function () {//{{{
 
             //if the local path wasnt found
             if ( ! curCue.path) {
+                dbg('Put> error');
                 var callback = curCue.callback,
                     data = curCue.data;
                 callback.call(callback, data, null);
+                ftp.emit('endproc');
                 return;
             }
 
@@ -953,6 +955,7 @@ proto.put = (function () {//{{{
         pipeFile = function (err, filedata) {
             dbg(('>piping file: ' + localPath).green);
             if (err) {
+                dbg('>file read error', err);
                 cue = {
                     callback: callback,
                     data: err,
@@ -1647,13 +1650,12 @@ proto.rename = function (paths, callback) {//{{{
     //run this in a cue
     ftp.run('RNFR ' + from, function (err, data) {
         if (err) {
-            dbg('1234'.red);
-            dbg(err);
+            callback.call(callback, err, data);
         } else {
             //run rename to command immediately
             ftp.run('RNTO ' + to, callback, true);
         }
-    });
+    }, false, true);
 };//}}}
 
 

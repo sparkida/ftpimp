@@ -14,6 +14,7 @@ I have a working implementation of FTPimp in a file synchronization manager, bui
 
 Updates
 -------
+* July 8, 2014 3:21am(PDT) - v0.5.4 - **FTP.rename** will return an error if the file is not found
 * July 7, 2014 8:46am(PDT) - Fixed a cueing issue that occured when recursively removing directories using **FTP.rmdir**.
 * July 7, 2014 6:46am(PDT) - Fixed an issue that occurred when receiving data through ls, lsnames.
 * July 5, 2014 8:36am(PDT) - FTP.mkdir will now make recursive directories within the same cue group. Cue groups are a new feature as of **V0.5.0**

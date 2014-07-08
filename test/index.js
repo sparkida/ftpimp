@@ -66,9 +66,15 @@ Test.exe = function () {
 Test.run = function () {
     if (cueIndex.length === 0) {
         console.log('--- Testing Complete ---');
-        var i = 0;
+        var i = 0,
+            str = '';
         for (i; i < tests.length; i++) {
-            console.log(tests[i] + ': ', cue[tests[i]].pass);
+            str = '\n' + tests[i] + '\n' + 'Success: ' 
+                    + (cue[tests[i]].pass.success ? 'pass'.green : 'fail'.red);
+            if (undefined !== cue[tests[i]].pass.error) {
+                str += '\nError: ' + (cue[tests[i]].pass.error ? 'pass'.green : 'fail'.red);
+            }
+            console.log(str);
             //console.log(tests[i] + ': ', cue[tests[i]].results);
         }
         return;
@@ -121,6 +127,17 @@ Test.end = function () {
 
 
 Test.buildTests = function () {
+
+    Test.create('ls', '', 'fooError');
+    Test.create('lsnames', '', 'fooError');
+    Test.end();
+    Test.create('ls', '', 'fooError');
+    Test.create('lsnames', '', 'fooError');
+    Test.create('ls', '', 'fooError');
+    Test.create('lsnames', '', 'fooError');
+    Test.create('ls', '', 'fooError');
+    Test.create('lsnames', '', 'fooError');
+    Test.end();
     //test success, then error when applicable
     Test.create('chdir', '', 'fooError');
     //will fail at making root
@@ -129,7 +146,6 @@ Test.buildTests = function () {
     Test.create('ls', '', 'fooError');
     Test.create('lsnames', '', 'fooError');
     Test.create('rmdir', testDir, 'fooError');
-    Test.end();
     Test.create('put', 'index.js', 'foo');
     Test.create('rename', ['index.js', 'ind.js'], ['index.js', 'foo.js']);
     Test.create('get', 'ind.js', 'fooError');
@@ -138,6 +154,8 @@ Test.buildTests = function () {
     Test.create('unlink', 'ind.js', 'fooError');
     Test.create('run', 'NOOP');
 
+    //stops the test immediately
+    //Test.end();
 
     Test.create('root');
     Test.create('getcwd');
