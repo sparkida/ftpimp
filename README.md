@@ -1,18 +1,15 @@
 
-FTPimp V0.5.4 - stable!
-======
+FTPimp V1.0.0 - stable!
+=======================
 An improved implementation of the FTP service API for NodeJS.
 <br>
-**Everything has been greatly improved at this point.**
-<br>
-**Be sure to update as we are in Beta**
+**Everything has been greatly improved at this point. Passing @ 100%**
+
 
 
 API Documentation
 -----------------
 For a full breakdown of this API, including examples [&not;FTPimp.net](http://ftpimp.net)
-<br>
-Keep checking back, and don't forget to update to the newest version!
 
 
 Find a Bug?
@@ -103,6 +100,7 @@ ftp.mkdir(tempDir + '/some/deep/directory', function (err, data) {
 
 Updates
 -------
+* July 9, 2014 8:08am(PDT) - **Major Update** - v1.0.0 - This is the pre-release candidate, everything has passed testing at this point, I will shift my focus to documentation and environment specific testing while tackling active and passive connection concerns. 
 * July 8, 2014 3:38am(PDT) - v0.5.42 - The primary Cue **FTP.cue** will now emit a **"cueEmpty"** event when the last item in the cue completes.
 * July 8, 2014 3:21am(PDT) - v0.5.4 - **FTP.rename** will return an error if the file is not found
 * July 7, 2014 8:46am(PDT) - Fixed a cueing issue that occured when recursively removing directories using **FTP.rmdir**.

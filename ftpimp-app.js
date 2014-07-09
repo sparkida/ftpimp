@@ -290,7 +290,7 @@ exeProto._checkProc = function () {
 
 
 exeProto._closePipe = function () {
-    console.log('closing.....'.red);
+    dbg('closing.....'.red);
     var that = this,
         data = that.pipeData;
     try {
@@ -298,7 +298,7 @@ exeProto._closePipe = function () {
     } catch (dataNotBoundError) {
         dbg('data not bound: ', dataNotBoundError);
     }
-    console.log(that.pipeData);
+    dbg(that.pipeData);
     if (null !== data) {
         dbg('ending transfer --- data received'.red);
         that.callback.call(that.callback, null, data.toString());
@@ -326,8 +326,8 @@ exeProto._responseHandler = function (code, data) {
         } catch (dataNotBoundError) {
             dbg('data not bound: ', dataNotBoundError);
         }
-        that.checkProc();
         that.callback.call(that.callback, Error(data), null);
+        that.checkProc();
     }
     else if (code === '150') {
         if (that.method !== 'STOR') {
@@ -343,16 +343,16 @@ exeProto._responseHandler = function (code, data) {
         }
     } 
     else {
+        that.callback.call(that.callback, null, data);
         if (code !== '227') {
             that.checkProc();
         }
-        that.callback.call(that.callback, null, data);
     }
 };
 
 
 exeProto._receiveData = function (data) {
-    console.log('receiving......'.green);
+    dbg('receiving......'.green);
     
     var that = this;
     that.pipeData = data.toString();
@@ -466,8 +466,8 @@ proto.cue = {//{{{
         prependToCue = prependToCue === undefined ? false : prependToCue;
         prependToCue ? ftp.cue._cue.unshift(callback) : ftp.cue._cue.push(callback);
         if ( ! ftp.cue.processing) {
-            //ftp.cue.run();
-            ftp.emit('endproc');
+            ftp.cue.run();
+            //ftp.emit('endproc');
         }
     },
     run: function () {
@@ -580,10 +580,13 @@ proto.SimpleCue = SimpleCue = (function (command) {//{{{
             ftp.openDataPort(portHandler, overRunNow === undefined ? cur.runNow : overRunNow, cur.holdCue);
         },
         runCueNow = function (runNow) {
+            dbg('running cue now');
             runCue(true);
         },
         disable = function () {
             running = false;
+            dbg(cue);
+            runCue();
         },
         init = true,
         cueManager;
@@ -893,9 +896,13 @@ proto.put = (function () {//{{{
             //if the local path wasnt found
             if ( ! curCue.path) {
                 dbg('Put> error');
+                running = false;
                 var callback = curCue.callback,
                     data = curCue.data;
                 callback.call(callback, data, null);
+                /*if( ! checkAborted()) {
+                    runCue(true);
+                }*/
                 ftp.emit('endproc');
                 return;
             }
@@ -1485,8 +1492,6 @@ SimpleCue.registerHook('LIST', function (data) {//{{{
     if (null === data) {
         return false;
     }
-    console.log('ftpimp> ' + 124812);
-    console.log(data);
     dbg(data.grey);
     data = data.split('\r\n').filter(Boolean);
     var i = 0,
@@ -1512,16 +1517,6 @@ SimpleCue.registerHook('LIST', function (data) {//{{{
 proto.ls = SimpleCue.create('LIST');
 
 
-SimpleCue.registerHook('MDTM', function (data) {//{{{
-    if (null === data) {
-        return false;
-    }
-    data = data.match(/([0-9]{4})([0-9]{2})([0-9]{2})([0-9]{2})([0-9]{2})([0-9]{2})/);
-    return Date.parse(data[1] + '-' + data[2] + '-' + data[3] + ' ' 
-        + data[4] + ':' + data[5] + ':' + data[6]);
-});//}}}
-
-
 /**
  * Runs the FTP command MDTM - Return the modification time of a file
  * @function FTP#filemtime
@@ -1541,7 +1536,17 @@ SimpleCue.registerHook('MDTM', function (data) {//{{{
  *     }
  * });
  */
-proto.filemtime = SimpleCue.create('MDTM');
+proto.filemtime = function (filepath, callback) {//{{{
+    ftp.run('MDTM ' + filepath, function (err, data) {
+        if ( ! err) {
+            data = data.match(/([0-9]{4})([0-9]{2})([0-9]{2})([0-9]{2})([0-9]{2})([0-9]{2})/);
+            data = Date.parse(data[1] + '-' + data[2] + '-' + data[3] + ' ' 
+                + data[4] + ':' + data[5] + ':' + data[6]);
+        }
+        callback.call(callback, err, data);
+    });
+};//}}}
+
 
 SimpleCue.registerHook('NLST', function (data) {//{{{
     if (null === data) {

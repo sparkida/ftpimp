@@ -34,6 +34,7 @@ Test.exe = function () {
     var test = this,
         errFunc, 
         successFunc = function (err, data) {
+            console.log('test complete-----' + testName);
             test.testSuccess.call(test, err, data);
             ftp.emit('testComplete');
         },
@@ -58,7 +59,10 @@ Test.exe = function () {
             };
             //one for success, one for fail
             ftp[testName].call(ftp, args[0], successThenErr);
+        } else {
+            ftp[testName].call(ftp, args[0], successFunc);
         }
+        
     }
 };
 
@@ -79,6 +83,7 @@ Test.run = function () {
         }
         return;
     }
+
     var testName = cueIndex.shift(),
         args = cue[testName];
     console.log('Running Test: ' + testName);
@@ -90,16 +95,18 @@ Test.create = function () {
     var i = 0,
         args = [],
         argLength = arguments.length,
-        testName;
+        testName,
+        id;
     for(i; i < argLength; i++) {
         args.push(arguments[i]);
     }
     testName = args.shift();
+    id = testName + '_' + String(new Date().getTime()) + Math.floor((Math.random() * 10000) + 1);    
     //cue registered tests until connected
-    cue[testName] = Test.build(testName, args);
-    cueIndex.push(testName);
-    tests.push(testName);
-    console.log('Test Created: ' + testName, args);
+    cue[id] = Test.build(testName, args);
+    cueIndex.push(id);
+    tests.push(id);
+    console.log('Test Created: ' + testName, args, '['+id.split('_').pop()+']');
 };
 
 
@@ -128,7 +135,6 @@ Test.end = function () {
 
 Test.buildTests = function () {
 
-
     Test.create('ls', '', 'fooError');
     Test.create('lsnames', '', 'fooError');
     //test success, then error when applicable
@@ -152,7 +158,7 @@ Test.buildTests = function () {
 
     Test.create('root');
     Test.create('getcwd');
-    Test.create('site');
+    //Test.create('site');
     Test.create('stat');
     Test.create('info');
     Test.create('ping');
