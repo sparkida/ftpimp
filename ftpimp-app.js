@@ -794,7 +794,7 @@ proto.connect = function (callback) {//{{{
      * Holds the connected socket object
      * @namespace FTP#socket
      */
-    ftp.socket = net.createConnection(21, 'ftp.sparkida.com');
+    ftp.socket = net.createConnection(ftp.config.port, ftp.config.host);
     ftp.socket.on('connect', handle.connected);
     if (undefined !== callback && typeof callback === 'function') {
         dbg('connect: callback');

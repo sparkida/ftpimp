@@ -100,6 +100,7 @@ ftp.mkdir(tempDir + '/some/deep/directory', function (err, data) {
 
 Updates
 -------
+* Aug 21, 2014 9:56am(PDT) - Fixed an issue where the ftp host and port were hard coded in, connection will now use ftp configuration as intended. Thanks to [broggeri](https://github.com/broggeri)!
 * July 9, 2014 8:08am(PDT) - **Major Update** - v1.0.0 - This is the pre-release candidate, everything has passed testing at this point, I will shift my focus to documentation and environment specific testing while tackling active and passive connection concerns. 
 * July 8, 2014 3:38am(PDT) - v0.5.42 - The primary Cue **FTP.cue** will now emit a **"cueEmpty"** event when the last item in the cue completes.
 * July 8, 2014 3:21am(PDT) - v0.5.4 - **FTP.rename** will return an error if the file is not found
