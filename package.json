@@ -1,6 +1,6 @@
 {
 	"name": "ftpimp",
-	"version": "1.0.2",
+	"version": "1.0.3",
 	"preferGlobal": true,
     "license": "MIT",
     "homepage": "http://ftpimp.net",
@@ -32,8 +32,7 @@
 		"node": ">=0.8.x"
 	},
     "author": {
-        "name": "Nicholas Riley",
-        "email": "nick@sparkida.com",
+        "name": "Nick Riley",
         "url": "http://sparkida.com"
     }
 }
