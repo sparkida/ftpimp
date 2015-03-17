@@ -1,7 +1,8 @@
 
-FTPimp V1.0.0 - stable!
+FTPimp V1.0.5 - stable!
 =======================
 An improved implementation of the FTP service API for NodeJS.
+**DOCUMENTATION COMING APRIL '15**
 <br>
 **Everything has been greatly improved at this point. Passing @ 100%**
 
