@@ -3,6 +3,6 @@
     "port": "21",
     "user": "root",
     "pass": "",
-    "debug": false
+    "debug": true
 }
 

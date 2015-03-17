@@ -1352,7 +1352,7 @@ StatObject.prototype = {//{{{
      * The regular expression used to parse the stat string 
      * @type {object}
      */
-    _reg: /([dl\-])([wrx\-]{9})\s+([0-9]+)\s(\w+)\s+(\w+)\s+([0-9]+)\s(\w+\s+[0-9]{1,2}\s[0-9]{2}:[0-9]{2})\s([\w\.\~\+\-_>\s\\\/]+)/,
+    _reg: /([dl\-])([wrx\-]{9})\s+([0-9]+)\s(\w+)\s+(\w+)\s+([0-9]+)\s(\w+\s+[0-9]{1,2}\s+[0-9]{2}:?[0-9]{2})\s+([\w\.\~\+\-_>\s\\\/]+)/,
     //TODO -- raw 
     /** 
      * The actual response string
