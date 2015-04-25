@@ -1,16 +1,14 @@
 /**
  * FTPimp
  * @author Nicholas Riley
- * @module ftpimp
  */
 
 "use strict";
 var net = require('net'),//{{{
     fs = require('fs'),
     path = require('path'),
-    util = require('util'),
     colors = require('colors'),
-    events = require('events'),
+    EventEmitter = require('events').EventEmitter,
     devMode = false,
     dbg = function () {},
     StatObject,
@@ -18,17 +16,15 @@ var net = require('net'),//{{{
     handle,
     ftp,
     cmd,
-    /** @constructor CMD */
+    /** @constructor */
     CMD = require('./lib/command'),
     /** 
      * The main FTP API object
-     * @constructor FTP
+     * @constructor
      * @param {null|object} config - The ftp connection settings (optional)
      * @param {boolean} connect - Whether or not to start the connection automatically; default is true;
      * @todo The major functions have been added and this current version
-     * is more stable and geared for asynchronous NodeJS. We will be implementing
-     * the following commands shortly
-     * @todo Add 
+     * is more stable and geared for asynchronous NodeJS. The following commands need to be added:
      * @todo Add FTP.stou
      * @todo Add FTP.rein
      * @todo Add FTP.site
@@ -41,7 +37,6 @@ var net = require('net'),//{{{
      */
     FTP = function (cfg, connect) {
         ftp = this;
-        events.EventEmitter.call(this);
         connect = connect === undefined ? true : connect;
         if (undefined !== cfg && null !== cfg && cfg) {
             var n;
@@ -76,19 +71,23 @@ var net = require('net'),//{{{
  * the server connection has been established
  * @param {null|object} config - The ftp connection settings (optional)
  * @param {boolean} connect - Whether or not to start the connection automatically; default is true;
+ * @returns {object} FTP - return new FTP instance object
  */
 FTP.create = function (cfg, connect) {
     return new FTP(cfg, connect);
 };
 
 
-/* @memberof FTP. */
+/**
+ * The command module
+ * @type {object}
+ * @extends module:command
+ */
 FTP.CMD = CMD;
 
-//prototype from EventEmitter
-util.inherits(FTP, events.EventEmitter);
+FTP.prototype = new EventEmitter();
 
-/** @constructor FTP#Handle */
+/** @constructor */
 FTP.prototype.Handle = function () {
     return undefined;
 };
@@ -100,8 +99,7 @@ FTP.prototype.openPipes = 0;
 
 /**
  * Set once the ftp connection is established
- * @alias FTP#isReady
- * @type {object}
+ * @type {boolean}
  */
 FTP.prototype.isReady = false;
 
