@@ -1,10 +1,10 @@
 {
     "name": "ftpimp",
-	"version": "1.2.1",
+	"version": "1.2.12",
 	"preferGlobal": false,
     "license": "MIT",
     "homepage": "http://ftpimp.net",
-	"description": "FTP Improved - A better FTP API, built for NodeJS.",
+	"description": "FTP client for Windows and OSX / Linux.\nFTPimp is an (imp)roved implementation of the FTP service API for NodeJS.",
 	"main": "./ftpimp-app",
 	"directories": {
 		"lib": "./lib"
@@ -16,9 +16,9 @@
 		"url": "https://github.com/sparkida/ftpimp"
 	},
 	"keywords": [
-		"ftp",
-        "client",
-        "improved",
+        "ftp",
+		"ftp client",
+        "recursive ftp",
         "file transfer",
         "mput",
         "mget"
