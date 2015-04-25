@@ -1,7 +1,7 @@
 {
-	"name": "ftpimp",
-	"version": "1.0.51",
-	"preferGlobal": true,
+    "name": "ftpimp",
+	"version": "1.2.0",
+	"preferGlobal": false,
     "license": "MIT",
     "homepage": "http://ftpimp.net",
 	"description": "FTP Improved - A better FTP API, built for NodeJS.",
@@ -10,8 +10,6 @@
 		"lib": "./lib"
 	},
 	"scripts": {
-		"start": "",
-		"test": ""
 	},
 	"repository": {
 		"type": "git",
@@ -34,5 +32,6 @@
     "author": {
         "name": "Nick Riley",
         "url": "http://sparkida.com"
-    }
+    },
+    "license": "MIT"
 }
