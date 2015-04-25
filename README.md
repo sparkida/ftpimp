@@ -1,5 +1,5 @@
-FTPim V1.2.0 :: stable
-=======================
+FTPimp V1.2 :: stable
+=====================
 FTP client for Windows and OSX / Linux.<br>
 FTPimp is an (imp)roved implementation of the FTP service API for NodeJS.
 

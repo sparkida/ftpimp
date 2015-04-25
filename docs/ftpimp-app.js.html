@@ -1,4 +1,32 @@
-/**
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: ftpimp-app.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: ftpimp-app.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/**
  * FTPimp
  * @author Nicholas Riley
  */
@@ -38,7 +66,7 @@ var net = require('net'),//{{{
     FTP = function (cfg, connect) {
         ftp = this;
         connect = connect === undefined ? true : connect;
-        if (undefined !== cfg && null !== cfg && cfg) {
+        if (undefined !== cfg &amp;&amp; null !== cfg &amp;&amp; cfg) {
             var n;
             for (n in cfg) {
                 if (cfg.hasOwnProperty(n)) {
@@ -49,7 +77,7 @@ var net = require('net'),//{{{
 
             if (ftp.config.debug) {
                 dbg = function () {
-                    for (n = 0; n < arguments.length; n++) {
+                    for (n = 0; n &lt; arguments.length; n++) {
                         console.log(arguments[n]);
                     }
                 };
@@ -249,7 +277,7 @@ var ExeCue = function (command, callback, runNow, holdCue) {
         handle.data.waiting = true;
 
         for (n in ExeCue.prototype) {
-            if (ExeCue.prototype.hasOwnProperty(n) && n.charAt(0) === '_' && ExeCue.prototype.hasOwnProperty(n)) {
+            if (ExeCue.prototype.hasOwnProperty(n) &amp;&amp; n.charAt(0) === '_' &amp;&amp; ExeCue.prototype.hasOwnProperty(n)) {
                 //remove underscore and provide hook
                 bind(n);
             }
@@ -378,21 +406,21 @@ FTP.prototype.runNext = function (command, callback, runNow, holdCue) {//{{{
 
 /**
  * Run a raw ftp command and issue callback on success/error.
- * <br>
+ * &lt;br>
  * Functions created with this provide a synchronized cue
  * that is asynchronous in itself, so items will be processed
  * in the order they are received, but this will happen
  * immediately. Meaning, if you make a dozen sequential calls
- * of <b>"ftp.run('MDTM', callback);"</b> they will all be read immediately,
+ * of &lt;b>"ftp.run('MDTM', callback);"&lt;/b> they will all be read immediately,
  * cued in order, and then processed one after the other. Unless
- * you set the optional parameter <b>runNow</b> to <b>true</b>
+ * you set the optional parameter &lt;b>runNow&lt;/b> to &lt;b>true&lt;/b>
  *
- * @param {string} command - The command that will be issued ie: <b>"CWD foo"</b>
+ * @param {string} command - The command that will be issued ie: &lt;b>"CWD foo"&lt;/b>
  * @param {function} callback - The callback function to be issued on success/error
  * @param {boolean} runNow - Typically run will invoke a cueing process, callbacks
  * will be stacked to maintain synchronicity. Sometimes, however, there will
  * be a need to have immediate control over the connection, like when sending
- * the command <b>"STOR"</b> to tell the server to close the data port's connection
+ * the command &lt;b>"STOR"&lt;/b> to tell the server to close the data port's connection
  * and write the file
  * @param {boolean} holdCue - Prevents the cue from firing an endproc event, user must end manually
  */
@@ -499,7 +527,7 @@ FTP.prototype.on('endproc', FTP.prototype.cue.run);//}}}
  * Provides a factory to create a simple cue procedure. Look
  * at the example below to see how we override the callback
  * function to perform additional actions before exiting
- * the cue and loading the next one.<br>
+ * the cue and loading the next one.&lt;br>
  * Functions created with this provide a synchronized cue
  * that is asynchronous in itself, so items will be processed
  * in the order they are received, but this will happen
@@ -527,7 +555,7 @@ FTP.prototype.on('endproc', FTP.prototype.cue.run);//}}}
  *     }
  * }());
  * @constructor FTP#SimpleCue
- * @param {string} command - The command that will be issued ie: <b>"CWD foo"</b>
+ * @param {string} command - The command that will be issued ie: &lt;b>"CWD foo"&lt;/b>
  * @returns {function} cueManager - The simple cue manager
  * @TODO - make OO - double check endproc and then callback ? or callback and endproc
  */
@@ -621,7 +649,7 @@ FTP.prototype.SimpleCue = SimpleCue = function (command) {//{{{
 
 /**
  * Create a new {@link FTP#SimpleCue} instance for the command type.
- * @param {string} command - The command that will be issued, no parameters, ie: <b>"CWD"</b>
+ * @param {string} command - The command that will be issued, no parameters, ie: &lt;b>"CWD"&lt;/b>
  */
 SimpleCue.create = function (command) {//{{{
     FTP.prototype.dataTransferTypes.push(command);
@@ -632,7 +660,7 @@ SimpleCue.create = function (command) {//{{{
 /**
  * Register a data hook function to intercept received data
  * on the command (parameter 1)
- * @param {string} command - The command that will be issued, no parameters, ie: <b>"CWD"</b>
+ * @param {string} command - The command that will be issued, no parameters, ie: &lt;b>"CWD"&lt;/b>
  * @param {function} callback - The callback function to be issued.
  */
 SimpleCue.registerHook = function (command, callback) {//{{{
@@ -710,7 +738,7 @@ handle.data = function (data) {//{{{
                 //only open once per ftp instance
             }
             //we will handle data transfer codes with the openDataPort
-            if (code !== '227' && code !== '226') {
+            if (code !== '227' &amp;&amp; code !== '226') {
                 end();
             }
         };
@@ -719,11 +747,11 @@ handle.data = function (data) {//{{{
     strData = strData.split('\n');
     strParts = strData.length;
 
-    for (i = 0; i < strParts; i++) {
+    for (i = 0; i &lt; strParts; i++) {
         code = strData[i].substr(0, 3);
         //make sure its a number and not yet stored
         if (code.search(/^[0-9]{3}/) > -1) {
-            if (commandCodes.indexOf(code) < 0) {
+            if (commandCodes.indexOf(code) &lt; 0) {
                 commandCodes.push(code);
                 commandData[code] = strData[i].substr(3);
             } else {
@@ -732,7 +760,7 @@ handle.data = function (data) {//{{{
         }
     }
     dbg(commandCodes.join(', ').grey);
-    for (i = 0; i < commandCodes.length; i++) {
+    for (i = 0; i &lt; commandCodes.length; i++) {
         code = commandCodes[i];
         strData = commandData[code].trim();
         dbg('------------------');
@@ -756,7 +784,7 @@ handle.data.start = true;
  * Logout from the ftp server
  */
 FTP.prototype.exit = function (sig) {//{{{
-    if (undefined !== sig && sig === 0) {
+    if (undefined !== sig &amp;&amp; sig === 0) {
         ftp.socket.end();
     } else {
         //ftp.pipe.close();
@@ -781,7 +809,7 @@ FTP.prototype.connect = function (callback) {//{{{
      */
     ftp.socket = net.createConnection(ftp.config.port, ftp.config.host);
     ftp.socket.on('connect', handle.connected);
-    if (undefined !== callback && typeof callback === 'function') {
+    if (undefined !== callback &amp;&amp; typeof callback === 'function') {
         dbg('connect: callback');
         ftp.once('ready', callback);
     } else {
@@ -945,7 +973,7 @@ FTP.prototype.put = (function () {//{{{
             pipeFile,
             cue;
 
-        if (!isString && !(paths instanceof Array)) {
+        if (!isString &amp;&amp; !(paths instanceof Array)) {
             throw new Error('ftp.put > parameter 1 expected an array or string');
         } else if (paths.length === 0) {
             throw new Error('ftp.put > parameter 1 expected recvd empty array');
@@ -1116,7 +1144,7 @@ FTP.prototype.rmdir = function (dirpath, callback, recursive, runNow, holdCue) {
     recursive = recursive === undefined ? false : recursive;
     var checkDir,
         noDots = function (statObj) {
-            return statObj.filename !== '.' && statObj.filename !== '..';
+            return statObj.filename !== '.' &amp;&amp; statObj.filename !== '..';
         };
     checkDir = function (err, data) {
         if (undefined === recursive || !recursive) {
@@ -1153,7 +1181,7 @@ FTP.prototype.rmdir = function (dirpath, callback, recursive, runNow, holdCue) {
                     if (data.length === 0) {
                         return null;
                     }
-                    for (i; i < data.length; i++) {
+                    for (i; i &lt; data.length; i++) {
                         if (data[i].isDirectory) {
                             //recursively remove the next directory while running immediately and holding the cue
                             ftp.runNext('RMD ' + path.join(dirpath, data[i].filename), checkDir, true, false, true);
@@ -1261,8 +1289,8 @@ FTP.prototype.get = SimpleCue.create('RETR');
  * Runs the FTP command RETR - Retrieve a remote file and 
  * then saves the file locally
  * @param {string|array} paths - An array of [from, to] paths,
- * as in read from <b><i>"remote/location/foo.txt"</i></b> and save
- * to <b><i>"local/path/bar.txt"</i></b><hr>
+ * as in read from &lt;b>&lt;i>"remote/location/foo.txt"&lt;/i>&lt;/b> and save
+ * to &lt;b>&lt;i>"local/path/bar.txt"&lt;/i>&lt;/b>&lt;hr>
  * if you are saving to the same relative location you are reading
  * from then you can supply a string as a shortcut.
  * @param {function} callback - The callback function to be issued.
@@ -1273,7 +1301,7 @@ FTP.prototype.save = function (paths, callback) {//{{{
         remotePath,
         pipeFile,
         dataHandler;
-    if (!isString && !(paths instanceof Array)) {
+    if (!isString &amp;&amp; !(paths instanceof Array)) {
         throw new Error('ftp.put > parameter 1 expected an array or string');
     } else if (paths.length === 0) {
         throw new Error('ftp.put > parameter 1 expected recvd empty array');
@@ -1304,7 +1332,7 @@ FTP.prototype.save = function (paths, callback) {//{{{
  * @constructor FTP#StatObject
  * @returns {object} StatObject - New StatObject
  * @param {string} stat - The stat string of the file or directory
- * i.e.<br><b>"drwxr-xr-x    2 userfoo   groupbar         4096 Jun 12:43 filename"</b>
+ * i.e.&lt;br>&lt;b>"drwxr-xr-x    2 userfoo   groupbar         4096 Jun 12:43 filename"&lt;/b>
  */
 FTP.prototype.StatObject = StatObject = function (stat) {//{{{
     var that = this,
@@ -1391,10 +1419,10 @@ StatObject.prototype = {//{{{
      */
     size: 0,
     /**
-	 * The files <b>relative*</b> modification time. *Since stat strings only 
+	 * The files &lt;b>relative*&lt;/b> modification time. *Since stat strings only 
      * give us accuracy to the minute, it's more accurate to perform a 
      * {@link FTP#filemtime} on your file if you wish to compare
-     * modified times <i>more accurately</i>.
+     * modified times &lt;i>more accurately&lt;/i>.
      * @instance
      * @type {number}
      */
@@ -1427,7 +1455,7 @@ StatObject.create = function (stat) {//{{{
 
 /**
  * Parses a permission string into it's relative number value
- * @param {string} permissionString - The string of permissions i.e. <b>"drwxrwxrwx"</b>
+ * @param {string} permissionString - The string of permissions i.e. &lt;b>"drwxrwxrwx"&lt;/b>
  * @returns {number} permissions - The number value of the given permissionString
  */
 StatObject.parsePermissions = function (permissionString) {//{{{
@@ -1437,10 +1465,10 @@ StatObject.parsePermissions = function (permissionString) {//{{{
         val = [],
         lap = 0,
         str = '';
-    for (i; i < permissionString.length; i += 3) {
+    for (i; i &lt; permissionString.length; i += 3) {
         str = permissionString.slice(i, i + 3);
         perm = 0;
-        for (c = 0; c < str.length; c++) {
+        for (c = 0; c &lt; str.length; c++) {
             if (str[c] === '-') {
                 continue;
             }
@@ -1478,7 +1506,7 @@ SimpleCue.registerHook('LIST', function (data) {//{{{
     var i = 0,
         cur,
         list = [];
-    for (i; i < data.length; i++) {
+    for (i; i &lt; data.length; i++) {
         console.log('--------');
         console.log(data[i]);
         cur = StatObject.create(data[i]);
@@ -1535,7 +1563,7 @@ SimpleCue.registerHook('NLST', function (data) {//{{{
         return false;
     }
     var filter = function (elem) {
-            return elem.length > 0 && elem !== '.' && elem !== '..';
+            return elem.length > 0 &amp;&amp; elem !== '.' &amp;&amp; elem !== '..';
         };
     data = data.split('\r\n').filter(filter);
     return data;
@@ -1669,7 +1697,7 @@ FTP.prototype.rename = function (paths, callback) {//{{{
 
 
 /**
- * Runs the FTP command SITE - Run site specific command - <b>will be added in next patch</b>
+ * Runs the FTP command SITE - Run site specific command - &lt;b>will be added in next patch&lt;/b>
  * @param {string} command - The command that will be issued
  * @param {string} parameters - The parameters to be passed with the command
  * @todo - This still needs to be added - should create an object of methods
@@ -1680,7 +1708,7 @@ FTP.prototype.site = function () {
 
 
 /**
- * Runs the FTP command TYPE - Set transfer type (default ASCII) - <b>will be added in next patch</b>
+ * Runs the FTP command TYPE - Set transfer type (default ASCII) - &lt;b>will be added in next patch&lt;/b>
  * @param {string} type - set to this type: 'ascii', 'ebcdic', 'image', 'lbyte'
  * @param {string} telnetType - 'nonprint', 'tfe', 'asa'
  * @todo - This still needs to be added - should create an object of methods
@@ -1696,7 +1724,7 @@ FTP.prototype.type = function () {
 
 
 /**
- * Runs the FTP command MODE - Set transfer mode (default Stream) - <b>will be added in next patch</b>
+ * Runs the FTP command MODE - Set transfer mode (default Stream) - &lt;b>will be added in next patch&lt;/b>
  * @param {string} type - set to this type: 'stream', 'block', 'compressed'
  * @todo - This still needs to be added - should create an object of methods
  */
@@ -1707,3 +1735,26 @@ FTP.prototype.mode = function () {
 
 module.exports = FTP;
 
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-lib_command.html">lib/command</a></li></ul><h3>Classes</h3><ul><li><a href="CMD.html">CMD</a></li><li><a href="FTP.html">FTP</a></li><li><a href="FTP_Handle.html">Handle</a></li><li><a href="FTP_SimpleCue.html">SimpleCue</a></li><li><a href="FTP_StatObject.html">StatObject</a></li></ul><h3>Events</h3><ul><li><a href="FTP.html#event:cueEmpty">cueEmpty</a></li><li><a href="FTP.html#event:fileTransferComplete">fileTransferComplete</a></li><li><a href="FTP.html#socket#event:error">error</a></li><li><a href="FTP.html#socket#event:ready">ready</a></li></ul><h3>Namespaces</h3><ul><li><a href="FTP.html#socket">socket</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.3.0-beta3</a> on Sat Apr 25 2015 12:09:06 GMT-0700 (PDT)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

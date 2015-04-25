@@ -1,6 +1,6 @@
 {
     "name": "ftpimp",
-	"version": "1.2.12",
+	"version": "1.2.13",
 	"preferGlobal": false,
     "license": "MIT",
     "homepage": "http://ftpimp.net",
@@ -23,6 +23,8 @@
         "mput",
         "mget"
 	],
+    "devDependencies": {
+    },
 	"dependencies": {
         "colors": "*"
 	},
