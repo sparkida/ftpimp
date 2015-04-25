@@ -1,11 +1,19 @@
-
-FTPimp V1.0.5 - stable!
+FTPim V1.2.0 :: stable
 =======================
-An improved implementation of the FTP service API for NodeJS.
-**DOCUMENTATION COMING APRIL '15**
-<br>
-**Everything has been greatly improved at this point. Passing @ 100%**
+FTP client for Windows and OSX / Linux.<br>
+FTPimp is an (imp)roved implementation of the FTP service API for NodeJS.
 
+Features
+--------
+FTPimp has several major benefits in comparison to other FTP clients:
+- Recursively put files, and create directories
+- Recursively delete directories
+- Optional, automated login
+- Overrideable methods
+- UNIX and Windows
+- Easily work with every step of the event based FTP process
+- Propietary queue and helper methods for controlling flow and easily extending FTPimp's functionality
+  
 
 
 API Documentation
@@ -13,31 +21,13 @@ API Documentation
 For a full breakdown of this API, including examples [&not;FTPimp.net](http://ftpimp.net)
 
 
-Find a Bug?
------------
-Please let me know so that I can fix it ASAP, cheers 
-[&not;Report a Bug](https://github.com/sparkida/ftpimp/issues)
-
-
-Features
---------
-- Recursively put files, and create directories
-- Recursively delete directories
-- UNIX and Windows
-- Optional, automated login
-- Overrideable methods
-- Node-like, event driven, process chain
-- Propietary Cue and helper methods for controlling flow
-  
-
 
 Additional Info
 ---------------
 I have a working implementation of FTPimp in a file synchronization manager, built for developers in rapid release / multi-project scenarios, that I'll be releasing within the week to demonstrate.
 
-* Most issues will likely be the result of a lack in documentation, which I'm working on and will be updating shortly
-    - by default, FTPimp uses passive connections, this can be changed; **actually FTPimp is OOP, you can override everything to your liking pretty quickly and easily.**
-    - every cue runs on the same level the command was executed in and each cued command has the ability to group a series of commands into a single cue, this allows you to chain methods for building procedures such as the recursive mkdir procedure, which does exactly what it says: recurses through the FTP.mkdir command in a single cue.
+- by default, FTPimp uses passive connections for security purposes, but **you can override anything** you want pretty quickly to build a very robust FTP application. 
+- every cue runs on the same level the command was executed in and each cued command has the ability to group a series of commands into a single cue, this allows you to chain methods for building procedures such as the recursive mkdir procedure, which does exactly what it says: recurses through the FTP.mkdir command in a single cue.
 
 
 
@@ -97,10 +87,15 @@ ftp.mkdir(tempDir + '/some/deep/directory', function (err, data) {
 ```
 
 
+Find a Bug?
+-----------
+Please let me know so that I can fix it ASAP, cheers 
+[&not;Report a Bug](https://github.com/sparkida/ftpimp/issues)
 
 
 Updates
 -------
+* Apr 25, 2015 10:09am(PDT) - v1.2! Linted. Addressed issues that prevented data from transferring completely when using things like `ls` `lsnames` etc...
 * Aug 21, 2014 9:56am(PDT) - Fixed an issue where the ftp host and port were hard coded in, connection will now use ftp configuration as intended. Thanks to [broggeri](https://github.com/broggeri)!
 * July 9, 2014 8:08am(PDT) - **Major Update** - v1.0.0 - This is the pre-release candidate, everything has passed testing at this point, I will shift my focus to documentation and environment specific testing while tackling active and passive connection concerns. 
 * July 8, 2014 3:38am(PDT) - v0.5.42 - The primary Cue **FTP.cue** will now emit a **"cueEmpty"** event when the last item in the cue completes.
