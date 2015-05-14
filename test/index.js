@@ -5,8 +5,8 @@
  */
 
 //TODO - change to main
-var FTP = require('../ftpimp-app'),
-    config = require('./config.json'),
+var FTP = require('../'),
+    config = require('./config'),
     /**create new FTP instance connection
      * and login are automated */
     ftp = FTP.create(config, false),
