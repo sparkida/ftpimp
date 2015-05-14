@@ -95,6 +95,7 @@ Please let me know so that I can fix it ASAP, cheers
 
 Updates
 -------
+* May 14, 2015 8:50am(PDT) - v1.3! Addresses issues that occur when working in cross platform environment. This added automated switching between `binary` and `ascii(default)`
 * Apr 25, 2015 10:09am(PDT) - v1.2! Linted. Addressed issues that prevented data from transferring completely when using things like `ls` `lsnames` etc...
 * Aug 21, 2014 9:56am(PDT) - Fixed an issue where the ftp host and port were hard coded in, connection will now use ftp configuration as intended. Thanks to [broggeri](https://github.com/broggeri)!
 * July 9, 2014 8:08am(PDT) - **Major Update** - v1.0.0 - This is the pre-release candidate, everything has passed testing at this point, I will shift my focus to documentation and environment specific testing while tackling active and passive connection concerns. 

@@ -145,9 +145,13 @@ Test.buildTests = function () {
     Test.create('ls', '', 'fooError');
     Test.create('lsnames', '', 'fooError');
     Test.create('rmdir', testDir, 'fooError');
+    Test.create('type', 'ascii');
     Test.create('put', 'index.js', 'foo');
     Test.create('rename', ['index.js', 'ind.js'], ['index.js', 'foo.js']);
+    Test.create('type', 'binary');
     Test.create('get', 'ind.js', 'fooError');
+    Test.create('get', 'test.png');
+    Test.create('put', 'index.js');
     Test.create('save', ['ind.js', 'saved_ind.js'], 'fooError');
     Test.create('filemtime', 'ind.js', 'fooError');
     Test.create('unlink', 'ind.js', 'fooError');
