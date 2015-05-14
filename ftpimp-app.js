@@ -39,7 +39,12 @@ var net = require('net'),//{{{
         ftp = this;
         connect = connect === undefined ? true : connect;
         if (undefined !== cfg && null !== cfg && cfg) {
-            ftp.config = cfg;
+            Object.keys(cfg).map(function (key) {
+                ftp.config[key] = cfg[key];
+            });
+            if (undefined !== cfg.ascii) {
+                ftp.ascii = ftp.ascii.concat(cfg.ascii);
+            }
             if (ftp.config.debug) {
                 dbg = function () {
                     console.log.apply(console, arguments);
@@ -87,6 +92,12 @@ FTP.prototype.Handle = function () {
 //TODO - document totalPipes && openPipes
 FTP.prototype.totalPipes = 0;
 FTP.prototype.openPipes = 0;
+
+/**
+ * Holds the current file transfer type [ascii, binary, ecbdic, local]
+ * @type {string}
+ */
+FTP.prototype.currentType = 'ascii';
 
 /**
  * List of files to get and put in ASCII
@@ -615,7 +626,9 @@ FTP.prototype.SimpleCue = SimpleCue = function (command) {//{{{
                     }
                 };
             dbg(('SimpleCue::' + command + '> Opening data port').cyan);
-            ftp.openDataPort(portHandler, overRunNow === undefined ? cur.runNow : overRunNow, cur.holdCue);
+            ftp.setType(cur.filepath, function () {
+                ftp.openDataPort(portHandler, overRunNow === undefined ? cur.runNow : overRunNow, cur.holdCue);
+            }, true, true);
         },
         runCueNow = function (runNow) {
             dbg('running cue now');
@@ -759,7 +772,7 @@ handle.data = function (data) {//{{{
         };
 
     dbg(('\n>>>\n' + strData + '\n>>>\n').grey);
-    strData = strData.split('\n');
+    strData = strData.split(/[\r|\n]/).filter(Boolean);
     strParts = strData.length;
 
     for (i = 0; i < strParts; i++) {
@@ -768,10 +781,9 @@ handle.data = function (data) {//{{{
         if (code.search(/^[0-9]{3}/) > -1) {
             if (commandCodes.indexOf(code) < 0) {
                 commandCodes.push(code);
-                commandData[code] = strData[i].substr(3);
-            } else {
-                commandData[code] += strData[i].substr(3);
+                commandData[code] = '';
             }
+            commandData[code] += strData[i].substr(3);
         }
     }
     dbg(commandCodes.join(', ').grey);
@@ -972,13 +984,18 @@ FTP.prototype.put = (function () {//{{{
                 //runCue();
 
             };
+            //TODO --- set current type
             //write file data to remote data socket
             ftp.pipe.end(filedata, onEnd);
         };
         //make sure pipe wasn't aborted
         ftp.once('pipeAborted', checkAborted);
-        ftp.openDataPort(dataTransfer, true, true);
+
+        ftp.setType(curCue.path, function () {
+            ftp.openDataPort(dataTransfer, true, true);
+        }, true, true);
     };
+
     return function (paths, callback, runNow, holdCue) {
         //todo add unique id to string
         var isString = typeof paths === 'string',
@@ -1511,7 +1528,7 @@ StatObject.values = {//{{{
 
 SimpleCue.registerHook('LIST', function (data) {//{{{
     if (null === data) {
-        console.log('data received as empty');
+        dbg('data received as empty');
         return false;
     }
     dbg(data.grey);
@@ -1520,8 +1537,8 @@ SimpleCue.registerHook('LIST', function (data) {//{{{
         cur,
         list = [];
     for (i; i < data.length; i++) {
-        console.log('--------');
-        console.log(data[i]);
+        dbg('--------');
+        dbg(data[i]);
         cur = StatObject.create(data[i]);
         list.push(cur);
         dbg(cur);
@@ -1596,12 +1613,6 @@ FTP.prototype.lsnames = SimpleCue.create('NLST');
  * @param {function} callback - The callback function to be issued.
  */
 FTP.prototype.size = SimpleCue.create('SIZE');
-
-
-
-
-
-
 
 
 /**
@@ -1723,12 +1734,77 @@ FTP.prototype.site = function () {
 /**
  * Runs the FTP command TYPE - Set transfer type (default ASCII) - <b>will be added in next patch</b>
  * @param {string} type - set to this type: 'ascii', 'ebcdic', 'image', 'lbyte'
- * @param {string} telnetType - 'nonprint', 'tfe', 'asa'
- * @todo - This still needs to be added - should create an object of methods
+ * @param {string} secondType - 'nonprint', 'telnet', 'asa'
  */
-FTP.prototype.type = function () {
-	dbg('not yet implemented');
+FTP.prototype.type = function (type, secondType, callback, runNow, holdCue) {
+    var that = this,
+        cmd = '';
+    if (typeof secondType === 'function') {
+        holdCue = runNow;
+        runNow = callback;
+        callback = secondType;
+    }
+    if (undefined === type || undefined === that.typeMap[type]) {
+        throw new Error('ftp.type > parameter 1 expected valid FTP TYPE; [ascii, binary, ebcdic, local]');
+    }
+    cmd = that.typeMap[type];
+    if (undefined !== secondType && undefined === that.secondTypeMap[secondType]) {
+        cmd += ' ' + that.secondTypeMap[secondType];
+    }
+    //update currentType and run
+    ftp.currentType = type;
+    ftp.run('TYPE ' + cmd, callback, runNow, holdCue);
 };
+
+/**
+ * Sets the type of file transfer that should be used
+ * based on the path provided
+ * @params {string} filepath - the path to the file being transferred
+ */
+FTP.prototype.setType = function (filepath, callback, runNow, holdCue) {
+    var ext;
+    if (filepath.indexOf('.') > -1) {
+        if (filepath.indexOf('.') === 0) {
+            //dot files
+            if (ftp.currentType !== 'ascii') {
+                ftp.type('ascii', callback, runNow, holdCue);
+            } else {
+                callback();
+            }
+        } else {
+            ext = filepath.split('.').pop();
+            if (ftp.ascii.indexOf(ext) > -1) {
+                if (ftp.currentType !== 'ascii') {
+                    ftp.type('ascii', callback, runNow, holdCue);
+                } else {
+                    callback();
+                }
+            } else if (ftp.currentType === 'ascii') {
+                ftp.type('binary', callback, runNow, holdCue);
+            } else {
+                callback();
+            }
+        }
+    } else if (ftp.currentType !== 'ascii') {
+        ftp.type('ascii', callback, runNow, holdCue);
+    } else {
+        callback();
+    }
+};
+
+FTP.prototype.typeMap = {
+    ascii: 'A',
+    binary: 'I',
+    ebcdic: 'E',
+    local: 'L'
+};
+
+FTP.prototype.secondTypeMap = {
+    nonprint: 'N',
+    telnet: 'T',
+    asa: 'C'
+};
+
 /*
     ftp.raw('TYPE A N', function (err, data) {
         dbg(err, data);
