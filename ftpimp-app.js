@@ -39,19 +39,10 @@ var net = require('net'),//{{{
         ftp = this;
         connect = connect === undefined ? true : connect;
         if (undefined !== cfg && null !== cfg && cfg) {
-            var n;
-            for (n in cfg) {
-                if (cfg.hasOwnProperty(n)) {
-                    ftp.config[n] = cfg[n];
-
-                }
-            }
-
+            ftp.config = cfg;
             if (ftp.config.debug) {
                 dbg = function () {
-                    for (n = 0; n < arguments.length; n++) {
-                        console.log(arguments[n]);
-                    }
+                    console.log.apply(console, arguments);
                 };
             }
         }
@@ -93,9 +84,61 @@ FTP.prototype.Handle = function () {
 };
 
 
-//todo
+//TODO - document totalPipes && openPipes
 FTP.prototype.totalPipes = 0;
 FTP.prototype.openPipes = 0;
+
+/**
+ * List of files to get and put in ASCII
+ * @type {array}
+ */
+FTP.prototype.ascii = [
+    'am',
+    'asp',
+    'bat',
+    'c',
+    'cfm',
+    'cgi',
+    'conf',
+    'cpp',
+    'css',
+    'dhtml',
+    'diz',
+    'h',
+    'hpp',
+    'htm',
+    'html',
+    'in',
+    'inc',
+    'java',
+    'js',
+    'jsp',
+    'lua',
+    'm4',
+    'mak',
+    'md5',
+    'nfo',
+    'nsi',
+    'pas',
+    'patch',
+    'php',
+    'phtml',
+    'pl',
+    'po',
+    'py',
+    'qmail',
+    'sh',
+    'shtml',
+    'sql',
+    'svg',
+    'tcl',
+    'tpl',
+    'txt',
+    'vbs',
+    'xhtml',
+    'xml',
+    'xrc'
+];
 
 /**
  * Set once the ftp connection is established
@@ -255,7 +298,7 @@ var ExeCue = function (command, callback, runNow, holdCue) {
             }
         }
         ftp.once('response', that.responseHandler);
-        ftp.socket.write(command + '\n', function () {
+        ftp.socket.write(command + '\r\n', function () {
             dbg(('Run> command sent: ' + command).yellow);
         });
     };
@@ -1013,13 +1056,11 @@ FTP.prototype.put = (function () {//{{{
  * to be fired once on a data event
  */
 FTP.prototype.raw = function (command, callback) {//{{{
-    var parser = function (err, data) {
-            err = err ? err.toString() : err;
-            data = data ? data.toString() : data;
-            callback.call(callback, err, data);
+    var parser = function (data) {
+            callback.call(callback, data.toString());
         };
     ftp.socket.once('data', parser);
-    ftp.socket.write(command + '\n');
+    ftp.socket.write(command + '\r\n');
 };//}}}
 
 
