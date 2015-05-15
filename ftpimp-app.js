@@ -344,6 +344,7 @@ ExeCue.prototype._closePipe = function () {
         data = that.pipeData;
     try {
         ftp.pipe.removeListener('data', that.receiveData);
+        ftp.pipe.removeListener('end', that.closePipe);
     } catch (dataNotBoundError) {
         dbg('data not bound: ', dataNotBoundError);
     }
@@ -369,15 +370,17 @@ ExeCue.prototype._responseHandler = function (code, data) {
         //if (ftp.pipeClosed) {
         //end immediately
         try {
+            dbg('killing pipe');
             ftp.pipe.removeListener('data', that.receiveData);
             ftp.pipe.removeListener('end', that.closePipe);
             ftp.pipe.destroy();
+            dbg('---pipe down---'.red);
         } catch (dataNotBoundError) {
             dbg('data not bound: ', dataNotBoundError);
         }
         that.callback.call(that.callback, new Error(data), null);
         that.checkProc();
-    } else if (code === '150') {
+    } else if (code === '150' || code === '125') {
         if (that.method !== 'STOR') {
             dbg('listening for pipe data'.red);
             if (ftp.pipeClosed) {
@@ -524,7 +527,6 @@ FTP.prototype.cue = {//{{{
             ftp.cue.processing = true;
             dbg('Cue> Loaded...running');
             ftp.cue.currentProc = ftp.cue._cue.shift();
-            dbg(ftp.cue.currentProc.toString());
             if (!ftp.error) {
                 ftp.cue.currentProc.call(ftp.cue.currentProc);
             }
@@ -597,9 +599,9 @@ FTP.prototype.SimpleCue = SimpleCue = function (command) {//{{{
         id,
         cueManager,
         runCue = function (overRunNow) {
-            dbg((command + ' runCue ------ runNow?').red);
-            dbg(overRunNow);
-            dbg(('SimpleCue::' + command + '> Running').cyan);
+            dbg('SimpleCue> ' + command + ' runCue : override ' + overRunNow);
+            dbg('cueIndex length> ' + cueIndex.length);
+
             if (cueIndex.length === 0) {
                 dbg('SimpleCue> Empty ... stopping'.yellow);
                 ftp.emit('endproc');
@@ -607,23 +609,23 @@ FTP.prototype.SimpleCue = SimpleCue = function (command) {//{{{
                 running = false;
                 return;
             }
+            dbg(('SimpleCue::' + command + '> Running').cyan);
             running = true;
             curId = cueIndex.shift();
             cur = cue[curId];
             cue[curId] = null;
             delete cue[curId];
+            dbg(('SimpleCue:: loaded cue > ' + cur.id + ' == ' + curId).cyan);
             var portHandler = function () {
                     hook = undefined === that[command + 'Hook'] ? null : that[command + 'Hook'];
-                    dbg('hook: ' + hook);
+                    dbg('hook: ' + typeof hook);
                     //hook data into custom instance function
-                    if (null === hook || typeof hook !== 'function') {
-                        ftp.run(command + ' ' + cur.filepath, cur.callback, true);
-                    } else {
-                        ftp.run(command + ' ' + cur.filepath, function (err, data) {
-                            dbg('callback 2 --'.blue);
-                            cur.callback.call(cur.callback, err, hook(data));
-                        }, true);
-                    }
+                    ftp.run(command + ' ' + cur.filepath, function (err, data) {
+                        if (typeof hook === 'function') {
+                            data = hook(data);
+                        }
+                        cur.callback.call(cur, err, data);
+                    }, true);
                 };
             dbg(('SimpleCue::' + command + '> Opening data port').cyan);
             ftp.setType(cur.filepath, function () {
@@ -657,15 +659,17 @@ FTP.prototype.SimpleCue = SimpleCue = function (command) {//{{{
             ftp.on('dataTransferComplete', runCueNow);
             ftp.on('transferError', disable);
         }
-        dbg('SimpleCue> ' + command + ' > ' + filepath);
-        id = new Date().getTime() + '-' + Math.floor((Math.random() * 1000) + 1);
+        id = new Date().getTime() + '-' + Math.floor((Math.random() * 999) + 100);
+        dbg('Creating SimpleCue > ' + id + ' > ' + command + ' ' + filepath);
         cue[id] = {
+            id: id,
             callback: callback,
             filepath: filepath,
             runNow: runNow,
             holdCue: holdCue
         };
         cueIndex.push(id);
+        dbg('Cue is ' + (running ? 'running' : 'empty...loading'));
         if (!running) {
             runCue();
         }
@@ -896,7 +900,7 @@ FTP.prototype.openDataPort = function (callback, runNow, holdCue) {//{{{
                 dbg(ftp.openPipes);
             });*/
         };
-    ftp.pasv(ftp.config.pasvAddress, dataHandler, runNow, true);
+    ftp.pasv(dataHandler, runNow, true);
 };//}}}
 
 
@@ -1253,11 +1257,15 @@ FTP.prototype.getcwd.raw = 'PWD';
  * @param {function} callback - The callback function to be issued.
  */
 FTP.prototype.chdir = function (dirname, callback) {//{{{
+    var dirname;
     ftp.run('CWD ' + dirname, function (err, data) {
         if (!err) {
-            dbg(data);
-            data = data.match(/directory is (.*)/)[1];
-            ftp.cwd = data;
+            dirname = data.match(/"(.*)"/);
+            if (null !== dirname) {
+                ftp.cwd = dirname[1];
+            } else {
+                ftp.cwd = data;
+            }
         }
         callback.call(callback, err, data);
     });
@@ -1642,8 +1650,8 @@ FTP.prototype.pass = function (pass, callback) {
  * @param {function} callback - The callback function to be issued.
  * @param {boolean} runNow - Run the command immediately. 
  */
-FTP.prototype.pasv = function (pasv, callback, runNow) {
-	ftp.run('PASV ' + pasv, callback, runNow);
+FTP.prototype.pasv = function (callback, runNow) {
+	ftp.run('PASV', callback, runNow);
 };
 
 
