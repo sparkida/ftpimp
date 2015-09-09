@@ -1,39 +1,42 @@
 {
-    "name": "ftpimp",
-	"version": "1.3.1",
-	"preferGlobal": false,
-    "license": "MIT",
-    "homepage": "http://ftpimp.net",
-	"description": "FTP client for Windows and OSX / Linux.\nFTPimp is an (imp)roved implementation of the FTP service API for NodeJS.",
-	"main": "./ftpimp-app",
-	"directories": {
-		"lib": "./lib"
-	},
-	"scripts": {
-	},
-	"repository": {
-		"type": "git",
-		"url": "https://github.com/sparkida/ftpimp"
-	},
-	"keywords": [
-        "ftp",
-		"ftp client",
-        "recursive ftp",
-        "file transfer",
-        "mput",
-        "mget"
-	],
-    "devDependencies": {
-    },
-	"dependencies": {
-        "colors": "*"
-	},
-	"engine": {
-		"node": ">=0.8.x"
-	},
-    "author": {
-        "name": "Nick Riley",
-        "url": "http://sparkida.com"
-    },
-    "license": "MIT"
+  "name": "ftpimp",
+  "version": "2.0.0",
+  "preferGlobal": false,
+  "license": "MIT",
+  "homepage": "http://ftpimp.net",
+  "description": "FTP client for Windows and OSX / Linux.\nFTPimp is an (imp)roved implementation of the FTP service API for NodeJS.",
+  "main": "./index",
+  "directories": {
+    "lib": "./lib"
+  },
+  "scripts": {
+    "test": "./node_modules/.bin/mocha --reporter spec -b"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sparkida/ftpimp"
+  },
+  "keywords": [
+    "ftp",
+    "ftp client",
+    "recursive ftp",
+    "file transfer",
+    "mput",
+    "mget"
+  ],
+  "devDependencies": {
+    "mocha": "^2.3.2",
+    "chai": "3.0.x"
+  },
+  "dependencies": {
+    "colors": "*",
+    "async": "^1.2.1"
+  },
+  "engine": {
+    "node": ">=0.10.x"
+  },
+  "author": {
+    "name": "Nick Riley",
+    "url": "http://sparkida.com"
+  }
 }
