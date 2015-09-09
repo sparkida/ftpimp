@@ -4,12 +4,11 @@
  */
 
 "use strict";
+require('colors');
 var net = require('net'),//{{{
     fs = require('fs'),
     path = require('path'),
-    colors = require('colors'),
     EventEmitter = require('events').EventEmitter,
-    devMode = false,
     dbg = function () {},
     StatObject,
     SimpleCue,
@@ -103,53 +102,53 @@ FTP.prototype.currentType = 'ascii';
  * List of files to get and put in ASCII
  * @type {array}
  */
-FTP.prototype.ascii = [
-    'am',
-    'asp',
-    'bat',
-    'c',
-    'cfm',
-    'cgi',
-    'conf',
-    'cpp',
-    'css',
-    'dhtml',
-    'diz',
-    'h',
-    'hpp',
-    'htm',
-    'html',
-    'in',
-    'inc',
-    'java',
-    'js',
-    'jsp',
-    'lua',
-    'm4',
-    'mak',
-    'md5',
-    'nfo',
-    'nsi',
-    'pas',
-    'patch',
-    'php',
-    'phtml',
-    'pl',
-    'po',
-    'py',
-    'qmail',
-    'sh',
-    'shtml',
-    'sql',
-    'svg',
-    'tcl',
-    'tpl',
-    'txt',
-    'vbs',
-    'xhtml',
-    'xml',
-    'xrc'
-];
+FTP.prototype.ascii = {
+    am: 1,
+    asp: 1,
+    bat: 1,
+    c: 1,
+    cfm: 1,
+    cgi: 1,
+    conf: 1,
+    cpp: 1,
+    css: 1,
+    dhtml: 1,
+    diz: 1,
+    h: 1,
+    hpp: 1,
+    htm: 1,
+    html: 1,
+    in: 1,
+    inc: 1,
+    java: 1,
+    js: 1,
+    jsp: 1,
+    lua: 1,
+    m4: 1,
+    mak: 1,
+    md5: 1,
+    nfo: 1,
+    nsi: 1,
+    pas: 1,
+    patch: 1,
+    php: 1,
+    phtml: 1,
+    pl: 1,
+    po: 1,
+    py: 1,
+    qmail: 1,
+    sh: 1,
+    shtml: 1,
+    sql: 1,
+    svg: 1,
+    tcl: 1,
+    tpl: 1,
+    txt: 1,
+    vbs: 1,
+    xhtml: 1,
+    xml: 1,
+    xrc: 1
+};
 
 /**
  * Set once the ftp connection is established
@@ -412,9 +411,7 @@ FTP.prototype.runNext = function (command, callback, runNow, holdCue) {//{{{
     runNow = runNow === undefined ? false : runNow;
     holdCue = holdCue === undefined ? false : holdCue;
 
-    var dataHandler,
-        that = this,
-        callbackConstruct = function () {
+   	var callbackConstruct = function () {
             dbg('Run> running callbackConstruct'.yellow + ' ' + command);
             //var cueInstance = 
             ExeCue.create(command, callback, runNow, holdCue);
@@ -457,9 +454,7 @@ FTP.prototype.run = function (command, callback, runNow, holdCue) {//{{{
     runNow = runNow === undefined ? false : runNow;
     holdCue = holdCue === undefined ? false : holdCue;
 
-    var dataHandler,
-        that = this,
-        callbackConstruct = function () {
+    var callbackConstruct = function () {
             dbg('Run> running callbackConstruct'.yellow + ' ' + command);
             if (command === 'QUIT') {
                 ftp.cue.reset();
@@ -737,7 +732,6 @@ handle.data = function (data) {//{{{
         strParts,
         commandCodes = [],
         commandData = {},
-        curCommand,
         cmdName,
         code,
         i,
@@ -1003,7 +997,6 @@ FTP.prototype.put = (function () {//{{{
     return function (paths, callback, runNow, holdCue) {
         //todo add unique id to string
         var isString = typeof paths === 'string',
-            id = new Date().getTime() + '_' + Math.floor(Math.random() * 1000 + 1),
             localPath,
             remotePath,
             pipeFile,
@@ -1194,7 +1187,6 @@ FTP.prototype.rmdir = function (dirpath, callback, recursive, runNow, holdCue) {
             lsHandler = function (err, data) {
                 if (!err) {
                     var i = 0,
-                        method = '',
                         mainData = data,
                         unlinkHandler = function (index, end) {
                             return function (err) {
@@ -1249,15 +1241,14 @@ FTP.prototype.getcwd = function (callback) {//{{{
     });
 };//}}}
 
-
 FTP.prototype.getcwd.raw = 'PWD';
+
 /**
  * Runs the FTP command CWD - Change Working Directory
  * @param {string} dirpath - The directory name to change to.
  * @param {function} callback - The callback function to be issued.
  */
 FTP.prototype.chdir = function (dirname, callback) {//{{{
-    var dirname;
     ftp.run('CWD ' + dirname, function (err, data) {
         if (!err) {
             dirname = data.match(/"(.*)"/);
@@ -1271,9 +1262,7 @@ FTP.prototype.chdir = function (dirname, callback) {//{{{
     });
 };//}}}
 
-
 FTP.prototype.chdir.raw = 'CWD';
-
 
 /**
  * Runs the FTP command DELE - Delete remote file
@@ -1337,7 +1326,6 @@ FTP.prototype.save = function (paths, callback) {//{{{
     var isString = typeof paths === 'string',
         localPath,
         remotePath,
-        pipeFile,
         dataHandler;
     if (!isString && !(paths instanceof Array)) {
         throw new Error('ftp.put > parameter 1 expected an array or string');
@@ -1587,8 +1575,8 @@ FTP.prototype.filemtime = function (filepath, callback) {//{{{
         if (!err) {
             data = data.match(/([0-9]{4})([0-9]{2})([0-9]{2})([0-9]{2})([0-9]{2})([0-9]{2})/);
             if (null !== data) {
-                data = Date.parse(data[1] + '-' + data[2] + '-' + data[3] + ' '
-                    + data[4] + ':' + data[5] + ':' + data[6]);
+                data = Date.parse(data[1] + '-' + data[2] + '-' + data[3] + ' ' +
+					data[4] + ':' + data[5] + ':' + data[6]);
             }
         }
         callback.call(callback, err, data);
@@ -1772,8 +1760,8 @@ FTP.prototype.type = function (type, secondType, callback, runNow, holdCue) {
 FTP.prototype.setType = function (filepath, callback, runNow, holdCue) {
     var ext;
     if (filepath.indexOf('.') > -1) {
+		//dot files eg .htaccess 
         if (filepath.indexOf('.') === 0) {
-            //dot files
             if (ftp.currentType !== 'ascii') {
                 ftp.type('ascii', callback, runNow, holdCue);
             } else {
@@ -1781,7 +1769,7 @@ FTP.prototype.setType = function (filepath, callback, runNow, holdCue) {
             }
         } else {
             ext = filepath.split('.').pop();
-            if (ftp.ascii.indexOf(ext) > -1) {
+            if (undefined === ftp.ascii[ext]) {
                 if (ftp.currentType !== 'ascii') {
                     ftp.type('ascii', callback, runNow, holdCue);
                 } else {
