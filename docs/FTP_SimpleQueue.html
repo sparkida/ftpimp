@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>JSDoc: Class: SimpleCue</title>
+    <title>JSDoc: Class: SimpleQueue</title>
 
     <script src="scripts/prettify/prettify.js"> </script>
     <script src="scripts/prettify/lang-css.js"> </script>
@@ -17,7 +17,7 @@
 
 <div id="main">
 
-    <h1 class="page-title">Class: SimpleCue</h1>
+    <h1 class="page-title">Class: SimpleQueue</h1>
 
     
 
@@ -31,7 +31,7 @@
         <h2>
             <span class="ancestors"><a href="FTP.html">FTP</a>#</span>
         
-        SimpleCue
+        SimpleQueue
         </h2>
         
     
@@ -44,23 +44,23 @@
 
     
 
-    <h4 class="name" id="SimpleCue"><span class="type-signature"></span>new SimpleCue<span class="signature">(command)</span><span class="type-signature"> &rarr; {function}</span></h4>
+    <h4 class="name" id="SimpleQueue"><span class="type-signature"></span>new SimpleQueue<span class="signature">(command)</span><span class="type-signature"> &rarr; {function}</span></h4>
 
     
 
 
 
 <div class="description">
-    Provides a factory to create a simple cue procedure. Look
+    Provides a factory to create a simple queue procedure. Look
 at the example below to see how we override the callback
 function to perform additional actions before exiting
-the cue and loading the next one.<br>
-Functions created with this provide a synchronized cue
+the queue and loading the next one.<br>
+Functions created with this provide a synchronized queue
 that is asynchronous in itself, so items will be processed
 in the order they are received, but this will happen
 immediately. Meaning, if you make a dozen sequential calls
 to <a href="FTP.html#filemtime">FTP#filemtime</a> they will all be read immediately,
-cued in order, and then processed one after the other.
+queued in order, and then processed one after the other.
 </div>
 
 
@@ -153,7 +153,7 @@ cued in order, and then processed one after the other.
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="ftpimp-app.js.html">ftpimp-app.js</a>, <a href="ftpimp-app.js.html#line498">line 498</a>
+        <a href="index.js.html">index.js</a>, <a href="index.js.html#line549">line 549</a>
     </li></ul></dd>
     
 
@@ -187,7 +187,7 @@ cued in order, and then processed one after the other.
 
         
 <div class="param-desc">
-    cueManager - The simple cue manager
+    queueManager - The simple queue manager
 </div>
 
 
@@ -212,13 +212,13 @@ cued in order, and then processed one after the other.
     <pre class="prettyprint"><code>//the current implementation of FTP.rename is preferred,
 //this is merely being used as an example
 var myCustomRename = (function () {
-    var myCueManager = ftp.SimpleCue.create('RNFR');
+    var myQueueManager = ftp.SimpleQueue.create('RNFR');
     return function (pathArray, callback) {
         var from = pathArray[0],
             to = pathArray[1];
-        //override the callback, SimpleCue's expect the
+        //override the callback, SimpleQueue's expect the
         //first parameter to be a string
-        myCueManager(from, function (err, data) {
+        myQueueManager(from, function (err, data) {
             if (err) {
                 dbg(err);
             } else {
@@ -254,14 +254,14 @@ var myCustomRename = (function () {
 
     
 
-    <h4 class="name" id="~cueManager"><span class="type-signature">(inner) </span>cueManager<span class="signature">(filepath, callback, runNow)</span><span class="type-signature"></span></h4>
+    <h4 class="name" id="~queueManager"><span class="type-signature">(inner) </span>queueManager<span class="signature">(filepath, callback, runNow)</span><span class="type-signature"></span></h4>
 
     
 
 
 
 <div class="description">
-    The cue manager returned when creating a new <a href="FTP_SimpleCue.html">FTP#SimpleCue</a> object
+    The queue manager returned when creating a new <a href="FTP_SimpleQueue.html">FTP#SimpleQueue</a> object
 </div>
 
 
@@ -361,8 +361,8 @@ var myCustomRename = (function () {
 
             <td class="description last">Run the command immediately. Careful, concurrent connections
 will likely end in a socket error. This is meant for fine grained control over certain
-scenarios wherein the process is part of a running cue and you need to perform an ftp
-action prior to the FTP#endproc event firing and execing the next cue.</td>
+scenarios wherein the process is part of a running queue and you need to perform an ftp
+action prior to the FTP#endproc event firing and execing the next queue.</td>
         </tr>
 
     
@@ -403,7 +403,7 @@ action prior to the FTP#endproc event firing and execing the next cue.</td>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="ftpimp-app.js.html">ftpimp-app.js</a>, <a href="ftpimp-app.js.html#line598">line 598</a>
+        <a href="index.js.html">index.js</a>, <a href="index.js.html#line651">line 651</a>
     </li></ul></dd>
     
 
@@ -445,13 +445,13 @@ action prior to the FTP#endproc event firing and execing the next cue.</td>
 </div>
 
 <nav>
-    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-lib_command.html">lib/command</a></li></ul><h3>Classes</h3><ul><li><a href="CMD.html">CMD</a></li><li><a href="FTP.html">FTP</a></li><li><a href="FTP_Handle.html">Handle</a></li><li><a href="FTP_SimpleCue.html">SimpleCue</a></li><li><a href="FTP_StatObject.html">StatObject</a></li></ul><h3>Events</h3><ul><li><a href="FTP.html#event:cueEmpty">cueEmpty</a></li><li><a href="FTP.html#event:fileTransferComplete">fileTransferComplete</a></li><li><a href="FTP.html#socket#event:error">error</a></li><li><a href="FTP.html#socket#event:ready">ready</a></li></ul><h3>Namespaces</h3><ul><li><a href="FTP.html#socket">socket</a></li></ul>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-lib_command.html">lib/command</a></li></ul><h3>Classes</h3><ul><li><a href="CMD.html">CMD</a></li><li><a href="FTP.html">FTP</a></li><li><a href="FTP_Handle.html">Handle</a></li><li><a href="FTP_SimpleQueue.html">SimpleQueue</a></li><li><a href="FTP_StatObject.html">StatObject</a></li></ul><h3>Events</h3><ul><li><a href="FTP.html#event:fileTransferComplete">fileTransferComplete</a></li><li><a href="FTP.html#event:queueEmpty">queueEmpty</a></li><li><a href="FTP.html#socket#event:error">error</a></li><li><a href="FTP.html#socket#event:ready">ready</a></li></ul><h3>Namespaces</h3><ul><li><a href="FTP.html#socket">socket</a></li></ul>
 </nav>
 
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.3.0-beta3</a> on Sat Apr 25 2015 12:09:06 GMT-0700 (PDT)
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.3.0-beta3</a> on Fri Sep 11 2015 09:38:47 GMT-0700 (PDT)
 </footer>
 
 <script> prettyPrint(); </script>

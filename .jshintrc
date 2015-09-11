@@ -1,0 +1,10 @@
+{
+    "loopfunc": true,
+    "node": true,
+    "mocha": true,
+    "undef": true,
+    "unused": "vars",
+    "curly": true,
+    "predef": [
+    ]
+}
