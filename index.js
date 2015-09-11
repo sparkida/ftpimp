@@ -11,7 +11,7 @@ var net = require('net'),//{{{
     EventEmitter = require('events').EventEmitter,
     dbg = function () {},
     StatObject,
-    SimpleCue,
+    SimpleQueue,
     handle,
     ftp,
     cmd,
@@ -36,9 +36,9 @@ var net = require('net'),//{{{
      */
     FTP = function (cfg, connect) {
         ftp = this;
-        connect = connect === undefined ? true : connect;
-        if (undefined !== cfg && null !== cfg && cfg) {
-            Object.keys(cfg).map(function (key) {
+        connect = connect ? true : false;
+        if (cfg) {
+            Object.keys(cfg).forEach(function (key) {
                 ftp.config[key] = cfg[key];
             });
             if (undefined !== cfg.ascii) {
@@ -223,7 +223,7 @@ FTP.prototype.baseDir = '';
  * @type {boolean}
  * @alias FTP#baseDir
  */
-FTP.prototype.cueDataTransfer = false;
+FTP.prototype.queueDataTransfer = false;
 
 /** 
  * A list of registered data transfer types; happens automatically.
@@ -283,7 +283,7 @@ FTP.prototype.init = function () {//{{{
 };//}}}
 
 
-var ExeCue = function (command, callback, runNow, holdCue) {
+var ExeQueue = function (command, callback, runNow, holdQueue) {
         var that = this,
             n,
             method = command.split(' ', 1)[0],
@@ -296,13 +296,13 @@ var ExeCue = function (command, callback, runNow, holdCue) {
         that.command = command;
         that.method = method;
         that.pipeData = null;
-        that.holdCue = holdCue;
+        that.holdQueue = holdQueue;
         that.callback = callback;
         that.runNow = runNow;
         handle.data.waiting = true;
 
-        for (n in ExeCue.prototype) {
-            if (ExeCue.prototype.hasOwnProperty(n) && n.charAt(0) === '_' && ExeCue.prototype.hasOwnProperty(n)) {
+        for (n in ExeQueue.prototype) {
+            if (ExeQueue.prototype.hasOwnProperty(n) && n.charAt(0) === '_' && ExeQueue.prototype.hasOwnProperty(n)) {
                 //remove underscore and provide hook
                 bind(n);
             }
@@ -314,30 +314,30 @@ var ExeCue = function (command, callback, runNow, holdCue) {
     };
 
 
-ExeCue.create = function (command, callback, runNow, holdCue) {
-    return new ExeCue(command, callback, runNow, holdCue);
+ExeQueue.create = function (command, callback, runNow, holdQueue) {
+    return new ExeQueue(command, callback, runNow, holdQueue);
 };
 
 
-//end the cue
-ExeCue.prototype._end = function () {
+//end the queue
+ExeQueue.prototype._end = function () {
     var that = this;
     that.checkProc();
 };
 
-ExeCue.prototype.cueHolding = false;
-ExeCue.prototype._checkProc = function () {
+ExeQueue.prototype.queueHolding = false;
+ExeQueue.prototype._checkProc = function () {
     var that = this;
-    if (that.holdCue) {
-        dbg(('ExeCue> Ending process, holding cue: ' + that.command).yellow);
+    if (that.holdQueue) {
+        dbg(('ExeQueue> Ending process, holding queue: ' + that.command).yellow);
     } else {
-        dbg(('ExeCue> Ending process: ' + that.command).yellow);
+        dbg(('ExeQueue> Ending process: ' + that.command).yellow);
         ftp.emit('endproc');
     }
 };
 
 
-ExeCue.prototype._closePipe = function () {
+ExeQueue.prototype._closePipe = function () {
     dbg('closing.....'.red);
     var that = this,
         data = that.pipeData;
@@ -358,7 +358,7 @@ ExeCue.prototype._closePipe = function () {
 };
 
 
-ExeCue.prototype._responseHandler = function (code, data) {
+ExeQueue.prototype._responseHandler = function (code, data) {
     dbg(('Response handler: ' + code).cyan);
     var that = this;
     //dbg('pipe is ' + (ftp.pipeClosed ? 'closed' : 'open'));
@@ -400,21 +400,21 @@ ExeCue.prototype._responseHandler = function (code, data) {
 };
 
 
-ExeCue.prototype._receiveData = function (data) {
+ExeQueue.prototype._receiveData = function (data) {
     dbg('receiving...'.green);
     this.pipeData += data;
 };
 
 
-//run command next in cue
-FTP.prototype.runNext = function (command, callback, runNow, holdCue) {//{{{
+//run command next in queue
+FTP.prototype.runNext = function (command, callback, runNow, holdQueue) {//{{{
     runNow = runNow === undefined ? false : runNow;
-    holdCue = holdCue === undefined ? false : holdCue;
+    holdQueue = holdQueue === undefined ? false : holdQueue;
 
    	var callbackConstruct = function () {
             dbg('Run> running callbackConstruct'.yellow + ' ' + command);
-            //var cueInstance = 
-            ExeCue.create(command, callback, runNow, holdCue);
+            //var queueInstance = 
+            ExeQueue.create(command, callback, runNow, holdQueue);
         };
 
     if (undefined === command) { //TODO || cmd.allowed.indexOf(command.toLowerCase) {
@@ -425,7 +425,7 @@ FTP.prototype.runNext = function (command, callback, runNow, holdCue) {//{{{
     if (runNow) {
         callbackConstruct();
     } else {
-        ftp.cue.register(callbackConstruct, true);
+        ftp.queue.register(callbackConstruct, true);
     }
 };//}}}
 
@@ -433,34 +433,34 @@ FTP.prototype.runNext = function (command, callback, runNow, holdCue) {//{{{
 /**
  * Run a raw ftp command and issue callback on success/error.
  * <br>
- * Functions created with this provide a synchronized cue
+ * Functions created with this provide a synchronized queue
  * that is asynchronous in itself, so items will be processed
  * in the order they are received, but this will happen
  * immediately. Meaning, if you make a dozen sequential calls
  * of <b>"ftp.run('MDTM', callback);"</b> they will all be read immediately,
- * cued in order, and then processed one after the other. Unless
+ * queued in order, and then processed one after the other. Unless
  * you set the optional parameter <b>runNow</b> to <b>true</b>
  *
  * @param {string} command - The command that will be issued ie: <b>"CWD foo"</b>
  * @param {function} callback - The callback function to be issued on success/error
- * @param {boolean} runNow - Typically run will invoke a cueing process, callbacks
+ * @param {boolean} runNow - Typically run will invoke a queueing process, callbacks
  * will be stacked to maintain synchronicity. Sometimes, however, there will
  * be a need to have immediate control over the connection, like when sending
  * the command <b>"STOR"</b> to tell the server to close the data port's connection
  * and write the file
- * @param {boolean} holdCue - Prevents the cue from firing an endproc event, user must end manually
+ * @param {boolean} holdQueue - Prevents the queue from firing an endproc event, user must end manually
  */
-FTP.prototype.run = function (command, callback, runNow, holdCue) {//{{{
+FTP.prototype.run = function (command, callback, runNow, holdQueue) {//{{{
     runNow = runNow === undefined ? false : runNow;
-    holdCue = holdCue === undefined ? false : holdCue;
+    holdQueue = holdQueue === undefined ? false : holdQueue;
 
     var callbackConstruct = function () {
             dbg('Run> running callbackConstruct'.yellow + ' ' + command);
             if (command === 'QUIT') {
-                ftp.cue.reset();
+                ftp.queue.reset();
             }
-            //var cueInstance = 
-            ExeCue.create(command, callback, runNow, holdCue);
+            //var queueInstance = 
+            ExeQueue.create(command, callback, runNow, holdQueue);
         };
 
     if (undefined === command) { //TODO || cmd.allowed.indexOf(command.toLowerCase) {
@@ -471,68 +471,68 @@ FTP.prototype.run = function (command, callback, runNow, holdCue) {//{{{
     if (runNow) {
         callbackConstruct();
     } else {
-        ftp.cue.register(callbackConstruct);
+        ftp.queue.register(callbackConstruct);
     }
 };//}}}
 
 
 /**
- * Establishes a cue to provide synchronicity to ftp 
+ * Establishes a queue to provide synchronicity to ftp 
  * processes that would otherwise fail from concurrency.
  * This function is done automatically when using
- * the {@link FTP#run} method to cue commands.
- * @fires FTP#cueEmpty
- * @member {object} FTP#cue
- * @property {array} cue._cue - Stores registered procedures
- * and holds them until called by the cue.run method
- * @property {boolean} cue.processing - Returns true if there
- * are items running in the cue
- * @property {function} cue.register - Registers a new callback
- * function to be triggered after the cued command completes
- * @property {function} cue.run - If there is something in the
- * cue and cue.processing is false, than the first item
- * stored in cue._cue will be removed from the cue
+ * the {@link FTP#run} method to queue commands.
+ * @fires FTP#queueEmpty
+ * @member {object} FTP#queue
+ * @property {array} queue._queue - Stores registered procedures
+ * and holds them until called by the queue.run method
+ * @property {boolean} queue.processing - Returns true if there
+ * are items running in the queue
+ * @property {function} queue.register - Registers a new callback
+ * function to be triggered after the queued command completes
+ * @property {function} queue.run - If there is something in the
+ * queue and queue.processing is false, than the first item
+ * stored in queue._queue will be removed from the queue
  * and processed.
  */
-FTP.prototype.cue = {//{{{
-    _cue: [],
+FTP.prototype.queue = {//{{{
+    _queue: [],
     processing: false,
     reset: function () {
-        //...resets the cue
-        ftp.cue._cue = [];
+        //...resets the queue
+        ftp.queue._queue = [];
     },
-    register: function (callback, prependToCue) {
-        dbg('Cue> Registering callback...');
-        dbg(ftp.cue.processing);
-        dbg(ftp.cue._cue.length);
-        prependToCue = prependToCue === undefined ? false : prependToCue;
-        if (prependToCue) {
-            ftp.cue._cue.unshift(callback);
+    register: function (callback, prependToQueue) {
+        dbg('Queue> Registering callback...');
+        dbg(ftp.queue.processing);
+        dbg(ftp.queue._queue.length);
+        prependToQueue = prependToQueue === undefined ? false : prependToQueue;
+        if (prependToQueue) {
+            ftp.queue._queue.unshift(callback);
         } else {
-            ftp.cue._cue.push(callback);
+            ftp.queue._queue.push(callback);
         }
-        if (!ftp.cue.processing) {
-            ftp.cue.run();
+        if (!ftp.queue.processing) {
+            ftp.queue.run();
             //ftp.emit('endproc');
         }
     },
     run: function () {
-        dbg('Cue> Loading cue'.yellow);
-        if (ftp.cue._cue.length > 0) {
-            ftp.cue.processing = true;
-            dbg('Cue> Loaded...running');
-            ftp.cue.currentProc = ftp.cue._cue.shift();
+        dbg('Queue> Loading queue'.yellow);
+        if (ftp.queue._queue.length > 0) {
+            ftp.queue.processing = true;
+            dbg('Queue> Loaded...running');
+            ftp.queue.currentProc = ftp.queue._queue.shift();
             if (!ftp.error) {
-                ftp.cue.currentProc.call(ftp.cue.currentProc);
+                ftp.queue.currentProc.call(ftp.queue.currentProc);
             }
         } else {
             /**
-             * Fired when the primary cue is empty
-             * @event FTP#cueEmpty
+             * Fired when the primary queue is empty
+             * @event FTP#queueEmpty
              */
-            ftp.emit('cueEmpty');
-            ftp.cue.processing = false;
-            dbg('--cue empty--'.yellow);
+            ftp.emit('queueEmpty');
+            ftp.queue.processing = false;
+            dbg('--queue empty--'.yellow);
         }
     }
 };
@@ -543,31 +543,31 @@ FTP.prototype.on('endproc', function () {
 });
 
 
-FTP.prototype.on('endproc', FTP.prototype.cue.run);//}}}
+FTP.prototype.on('endproc', FTP.prototype.queue.run);//}}}
 
 
 /**
- * Provides a factory to create a simple cue procedure. Look
+ * Provides a factory to create a simple queue procedure. Look
  * at the example below to see how we override the callback
  * function to perform additional actions before exiting
- * the cue and loading the next one.<br>
- * Functions created with this provide a synchronized cue
+ * the queue and loading the next one.<br>
+ * Functions created with this provide a synchronized queue
  * that is asynchronous in itself, so items will be processed
  * in the order they are received, but this will happen
  * immediately. Meaning, if you make a dozen sequential calls
  * to {@link FTP#filemtime} they will all be read immediately,
- * cued in order, and then processed one after the other.
+ * queued in order, and then processed one after the other.
  * @example
  * //the current implementation of FTP.rename is preferred,
  * //this is merely being used as an example
  * var myCustomRename = (function () {
- *     var myCueManager = ftp.SimpleCue.create('RNFR');
+ *     var myQueueManager = ftp.SimpleQueue.create('RNFR');
  *     return function (pathArray, callback) {
  *         var from = pathArray[0],
  *             to = pathArray[1];
- *         //override the callback, SimpleCue's expect the
+ *         //override the callback, SimpleQueue's expect the
  *         //first parameter to be a string
- *         myCueManager(from, function (err, data) {
+ *         myQueueManager(from, function (err, data) {
  *             if (err) {
  *                 dbg(err);
  *             } else {
@@ -577,40 +577,40 @@ FTP.prototype.on('endproc', FTP.prototype.cue.run);//}}}
  *         });
  *     }
  * }());
- * @constructor FTP#SimpleCue
+ * @constructor FTP#SimpleQueue
  * @param {string} command - The command that will be issued ie: <b>"CWD foo"</b>
- * @returns {function} cueManager - The simple cue manager
+ * @returns {function} queueManager - The simple queue manager
  * @TODO - make OO - double check endproc and then callback ? or callback and endproc
  */
-FTP.prototype.SimpleCue = SimpleCue = function (command) {//{{{
+FTP.prototype.SimpleQueue = SimpleQueue = function (command) {//{{{
     var running = false,
         init = true,
         that = this,
-        cue = {},
-        cueIndex = [],
+        queue = {},
+        queueIndex = [],
         hook,
         cur,
         curId = '',
         id,
-        cueManager,
-        runCue = function (overRunNow) {
-            dbg('SimpleCue> ' + command + ' runCue : override ' + overRunNow);
-            dbg('cueIndex length> ' + cueIndex.length);
+        queueManager,
+        runQueue = function (overRunNow) {
+            dbg('SimpleQueue> ' + command + ' runQueue : override ' + overRunNow);
+            dbg('queueIndex length> ' + queueIndex.length);
 
-            if (cueIndex.length === 0) {
-                dbg('SimpleCue> Empty ... stopping'.yellow);
+            if (queueIndex.length === 0) {
+                dbg('SimpleQueue> Empty ... stopping'.yellow);
                 ftp.emit('endproc');
-                //stop cue
+                //stop queue
                 running = false;
                 return;
             }
-            dbg(('SimpleCue::' + command + '> Running').cyan);
+            dbg(('SimpleQueue::' + command + '> Running').cyan);
             running = true;
-            curId = cueIndex.shift();
-            cur = cue[curId];
-            cue[curId] = null;
-            delete cue[curId];
-            dbg(('SimpleCue:: loaded cue > ' + cur.id + ' == ' + curId).cyan);
+            curId = queueIndex.shift();
+            cur = queue[curId];
+            queue[curId] = null;
+            delete queue[curId];
+            dbg(('SimpleQueue:: loaded queue > ' + cur.id + ' == ' + curId).cyan);
             var portHandler = function () {
                     hook = undefined === that[command + 'Hook'] ? null : that[command + 'Hook'];
                     dbg('hook: ' + typeof hook);
@@ -622,65 +622,65 @@ FTP.prototype.SimpleCue = SimpleCue = function (command) {//{{{
                         cur.callback.call(cur, err, data);
                     }, true);
                 };
-            dbg(('SimpleCue::' + command + '> Opening data port').cyan);
+            dbg(('SimpleQueue::' + command + '> Opening data port').cyan);
             ftp.setType(cur.filepath, function () {
-                ftp.openDataPort(portHandler, overRunNow === undefined ? cur.runNow : overRunNow, cur.holdCue);
+                ftp.openDataPort(portHandler, overRunNow === undefined ? cur.runNow : overRunNow, cur.holdQueue);
             }, true, true);
         },
-        runCueNow = function (runNow) {
-            dbg('running cue now');
-            runCue(true);
+        runQueueNow = function (runNow) {
+            dbg('running queue now');
+            runQueue(true);
         },
         disable = function () {
             running = false;
-            dbg(cue);
-            runCue();
+            dbg(queue);
+            runQueue();
         };
 
     /** 
-     * The cue manager returned when creating a new {@link FTP#SimpleCue} object
-     * @memberof FTP#SimpleCue
+     * The queue manager returned when creating a new {@link FTP#SimpleQueue} object
+     * @memberof FTP#SimpleQueue
      * @inner
      * @param {string} filepath - The location of the remote file to process the set command.
      * @param {function} callback - The callback function to be issued.
      * @param {boolean} runNow - Run the command immediately. Careful, concurrent connections
      * will likely end in a socket error. This is meant for fine grained control over certain
-     * scenarios wherein the process is part of a running cue and you need to perform an ftp
-     * action prior to the {@link FTP#endproc} event firing and execing the next cue.
+     * scenarios wherein the process is part of a running queue and you need to perform an ftp
+     * action prior to the {@link FTP#endproc} event firing and execing the next queue.
      */
-    cueManager = function (filepath, callback, runNow, holdCue) {
+    queueManager = function (filepath, callback, runNow, holdQueue) {
         if (init) {
             init = false;
-            ftp.on('dataTransferComplete', runCueNow);
+            ftp.on('dataTransferComplete', runQueueNow);
             ftp.on('transferError', disable);
         }
         id = new Date().getTime() + '-' + Math.floor((Math.random() * 999) + 100);
-        dbg('Creating SimpleCue > ' + id + ' > ' + command + ' ' + filepath);
-        cue[id] = {
+        dbg('Creating SimpleQueue > ' + id + ' > ' + command + ' ' + filepath);
+        queue[id] = {
             id: id,
             callback: callback,
             filepath: filepath,
             runNow: runNow,
-            holdCue: holdCue
+            holdQueue: holdQueue
         };
-        cueIndex.push(id);
-        dbg('Cue is ' + (running ? 'running' : 'empty...loading'));
+        queueIndex.push(id);
+        dbg('Queue is ' + (running ? 'running' : 'empty...loading'));
         if (!running) {
-            runCue();
+            runQueue();
         }
     };
 
-    return cueManager;
+    return queueManager;
 };//}}}
 
 
 /**
- * Create a new {@link FTP#SimpleCue} instance for the command type.
+ * Create a new {@link FTP#SimpleQueue} instance for the command type.
  * @param {string} command - The command that will be issued, no parameters, ie: <b>"CWD"</b>
  */
-SimpleCue.create = function (command) {//{{{
+SimpleQueue.create = function (command) {//{{{
     FTP.prototype.dataTransferTypes.push(command);
-    return new SimpleCue(command);
+    return new SimpleQueue(command);
 };//}}}
 
 
@@ -690,11 +690,11 @@ SimpleCue.create = function (command) {//{{{
  * @param {string} command - The command that will be issued, no parameters, ie: <b>"CWD"</b>
  * @param {function} callback - The callback function to be issued.
  */
-SimpleCue.registerHook = function (command, callback) {//{{{
-    if (undefined !== SimpleCue.prototype[command + 'Hook']) {
-        throw new Error('Handle.SimpleCue already has hook registered: ' + command + 'Hook');
+SimpleQueue.registerHook = function (command, callback) {//{{{
+    if (undefined !== SimpleQueue.prototype[command + 'Hook']) {
+        throw new Error('Handle.SimpleQueue already has hook registered: ' + command + 'Hook');
     }
-    SimpleCue.prototype[command + 'Hook'] = callback;
+    SimpleQueue.prototype[command + 'Hook'] = callback;
 };//}}}
 
 
@@ -834,12 +834,10 @@ FTP.prototype.connect = function (callback) {//{{{
      */
     ftp.socket = net.createConnection(ftp.config.port, ftp.config.host);
     ftp.socket.on('connect', handle.connected);
-    if (undefined !== callback && typeof callback === 'function') {
-        dbg('connect: callback');
+    if (typeof callback === 'function') {
         ftp.once('ready', callback);
-    } else {
-        dbg('connect: no callback');
     }
+	dbg('connected: ' + ftp.config.host + ':' + ftp.config.port);
     ftp.socket.on('close', function () {
         dbg('**********socket CLOSED**************');
         process.exit(0);
@@ -857,7 +855,7 @@ FTP.prototype.connect = function (callback) {//{{{
  * @param {boolean} runNow - Run the command immediately.
  * @TODO Add in useActive parameter to choose how to handle data transfers
  */
-FTP.prototype.openDataPort = function (callback, runNow, holdCue) {//{{{
+FTP.prototype.openDataPort = function (callback, runNow, holdQueue) {//{{{
     var dataHandler = function (err, data) {
             if (err) {
                 dbg('error opening data port with PASV');
@@ -899,7 +897,8 @@ FTP.prototype.openDataPort = function (callback, runNow, holdCue) {//{{{
 
 
 /**
- * Asynchronously cues files for transfer, and transfers them in order to the server.
+ * Asynchronously queues files for transfer, and transfers them in order to the server.
+ * @function
  * @param {string|array} paths - The path to read and send the file,
  * if you are sending to the same location you are reading from then
  * you can supply a string as a shortcut.
@@ -909,9 +908,9 @@ FTP.prototype.openDataPort = function (callback, runNow, holdCue) {//{{{
 FTP.prototype.put = (function () {//{{{
     var running = false,
         //TODO - test this further
-        runCue;
-    runCue = function (curCue) {
-        dbg('FTP::put> running the pipe cue'.green, running);
+        runQueue;
+    runQueue = function (curQueue) {
+        dbg('FTP::put> running the pipe queue'.green, running);
         var callback,
             data,
             dataTransfer,
@@ -922,7 +921,7 @@ FTP.prototype.put = (function () {//{{{
                     ftp.pipeAborted = false;
                     running = false;
                     ftp.emit('pipeAborted');
-                    runCue(true);
+                    runQueue(true);
                     return true;
                 }
                 return false;
@@ -934,23 +933,23 @@ FTP.prototype.put = (function () {//{{{
         ftp.pipeActive = running = true;
 
         //if the local path wasnt found
-        if (!curCue.path) {
+        if (!curQueue.path) {
             dbg('Put> error');
             running = false;
-            callback = curCue.callback;
-            data = curCue.data;
+            callback = curQueue.callback;
+            data = curQueue.data;
             callback.call(callback, data, null);
             /*if(!checkAborted()) {
-                runCue(true);
+                runQueue(true);
             }*/
             ftp.emit('endproc');
             return;
         }
 
         dataTransfer = function (runNow) {
-            var callback = curCue.callback,
-                remotePath = curCue.path,
-                filedata = curCue.data,
+            var callback = curQueue.callback,
+                remotePath = curQueue.path,
+                filedata = curQueue.data,
                 onEnd;
 
             if (checkAborted()) {
@@ -967,7 +966,7 @@ FTP.prototype.put = (function () {//{{{
                 dbg('---data piped--- running STOR');
                 ftp.once('dataTransferComplete', function () {
                     dbg('data transfer complete');
-                    if (!curCue.holdCue) {
+                    if (!curQueue.holdQueue) {
                         ftp.emit('endproc');
                     }
                     running = false;
@@ -979,7 +978,7 @@ FTP.prototype.put = (function () {//{{{
                     callback.call(callback, null, remotePath);
                 });
                 //ftp.emit('endproc');
-                //runCue();
+                //runQueue();
 
             };
             //TODO --- set current type
@@ -989,18 +988,18 @@ FTP.prototype.put = (function () {//{{{
         //make sure pipe wasn't aborted
         ftp.once('pipeAborted', checkAborted);
 
-        ftp.setType(curCue.path, function () {
+        ftp.setType(curQueue.path, function () {
             ftp.openDataPort(dataTransfer, true, true);
         }, true, true);
     };
 
-    return function (paths, callback, runNow, holdCue) {
+    return function (paths, callback, runNow, holdQueue) {
         //todo add unique id to string
         var isString = typeof paths === 'string',
             localPath,
             remotePath,
             pipeFile,
-            cue;
+            queue;
 
         if (!isString && !(paths instanceof Array)) {
             throw new Error('ftp.put > parameter 1 expected an array or string');
@@ -1017,34 +1016,34 @@ FTP.prototype.put = (function () {//{{{
         //create an index so we know the order...
         //the files may be read at different times
         //into the pipeFile callback
-        dbg('>cueing file for put process: "' + localPath + '" to "' + remotePath + '"');
+        dbg('>queueing file for put process: "' + localPath + '" to "' + remotePath + '"');
         pipeFile = function (err, filedata) {
             dbg(('>piping file: ' + localPath).green);
             if (err) {
                 dbg('>file read error', err);
-                cue = {
+                queue = {
                     callback: callback,
                     data: err,
                     path: false,
                     runNow: runNow,
-                    holdCue: holdCue
+                    holdQueue: holdQueue
                 };
             } else {
-                dbg('>cueing file: "' + localPath + '" to "' + remotePath + '"');
-                cue = {
+                dbg('>queueing file: "' + localPath + '" to "' + remotePath + '"');
+                queue = {
                     callback: callback,
                     data: filedata,
                     path: remotePath,
                     runNow: runNow,
-                    holdCue: holdCue
+                    holdQueue: holdQueue
                 };
             }
-            runCue(cue);
+            runQueue(queue);
         };
         //TODO commands need to occur synchronously for the most part, we should
         //make something to read an array of file put commands, or the option
-        //to run a cue for all puts in that scope's level
-        ftp.cue.register(function () {
+        //to run a queue for all puts in that scope's level
+        ftp.queue.register(function () {
             fs.readFile(localPath, pipeFile);
         });
     };
@@ -1088,11 +1087,12 @@ FTP.prototype.root = function (callback) {//{{{
 
 
 /**
+ * Runs the FTP command MKD - Make a remote directory.
  * Creates a directory and returns the directory name.
- * Optionally create directories recursively. * 
+ * Optionally creates directories recursively.
  * @param {string} dirpath - The directory name to be created.
  * @param {function} callback - The callback function to be issued.
- * @param {string} recursive - Recursively create directories. (default: false)
+ * @param {boolean} recursive - Recursively create directories. (default: false)
  */
 FTP.prototype.mkdir = function (dirpath, callback, recursive) {//{{{
     //TODO add in error handling for parameters
@@ -1167,7 +1167,7 @@ FTP.prototype.mkdir = function (dirpath, callback, recursive) {//{{{
  * @param {function} callback - The callback function to be issued.
  * @param {string} recursive - Recursively delete files and subfolders.
  */
-FTP.prototype.rmdir = function (dirpath, callback, recursive, runNow, holdCue) {//{{{
+FTP.prototype.rmdir = function (dirpath, callback, recursive, runNow, holdQueue) {//{{{
     recursive = recursive === undefined ? false : recursive;
     var checkDir,
         noDots = function (statObj) {
@@ -1209,7 +1209,7 @@ FTP.prototype.rmdir = function (dirpath, callback, recursive, runNow, holdCue) {
                     }
                     for (i; i < data.length; i++) {
                         if (data[i].isDirectory) {
-                            //recursively remove the next directory while running immediately and holding the cue
+                            //recursively remove the next directory while running immediately and holding the queue
                             ftp.runNext('RMD ' + path.join(dirpath, data[i].filename), checkDir, true, false, true);
                         } else {
                             ftp.runNext(ftp.unlink.raw + ' ' + path.join(dirpath, data[i].filename), unlinkHandler(i, i === data.length - 1), false, true);
@@ -1221,7 +1221,7 @@ FTP.prototype.rmdir = function (dirpath, callback, recursive, runNow, holdCue) {
             ftp.ls(dirpath, lsHandler);
         }
     };
-    ftp.run('RMD ' + dirpath, checkDir, runNow, holdCue);
+    ftp.run('RMD ' + dirpath, checkDir, runNow, holdQueue);
 };//}}}
 
 
@@ -1306,10 +1306,11 @@ FTP.prototype.abort = function (callback) {//{{{
 
 /**
  * Runs the FTP command RETR - Retrieve a remote file
+ * @function
  * @param {string} filepath - The location of the remote file to fetch.
  * @param {function} callback - The callback function to be issued.
  */
-FTP.prototype.get = SimpleCue.create('RETR');
+FTP.prototype.get = SimpleQueue.create('RETR');
 
 
 /**
@@ -1342,7 +1343,7 @@ FTP.prototype.save = function (paths, callback) {//{{{
     dbg('>saving file: ' + remotePath + ' to ' + localPath);
     dataHandler = function (err, data) {
         if (err) {
-            callback.call(callback, err, localPath);
+            callback.call(callback, err, null);
         } else {
             fs.writeFile(localPath, data, function (err) {
                 callback.call(callback, err, localPath);
@@ -1522,7 +1523,7 @@ StatObject.values = {//{{{
 };//}}}
 
 
-SimpleCue.registerHook('LIST', function (data) {//{{{
+SimpleQueue.registerHook('LIST', function (data) {//{{{
     if (null === data) {
         dbg('data received as empty');
         return false;
@@ -1546,10 +1547,11 @@ SimpleCue.registerHook('LIST', function (data) {//{{{
 
 /**
  * Runs the FTP command LIST - List remote files
+ * @function
  * @param {string} filepath - The location of the remote file or directory to list.
  * @param {function} callback - The callback function to be issued.
  */
-FTP.prototype.ls = SimpleCue.create('LIST');
+FTP.prototype.ls = SimpleQueue.create('LIST');
 
 
 /**
@@ -1584,7 +1586,7 @@ FTP.prototype.filemtime = function (filepath, callback) {//{{{
 };//}}}
 
 
-SimpleCue.registerHook('NLST', function (data) {//{{{
+SimpleQueue.registerHook('NLST', function (data) {//{{{
     if (null === data) {
         return false;
     }
@@ -1597,18 +1599,20 @@ SimpleCue.registerHook('NLST', function (data) {//{{{
 
 /**
  * Runs the FTP command NLST - Name list of remote directory.
+ * @function
  * @param {string} dirpath - The location of the remote directory to list.
  * @param {function} callback - The callback function to be issued.
  */
-FTP.prototype.lsnames = SimpleCue.create('NLST');
+FTP.prototype.lsnames = SimpleQueue.create('NLST');
 
 
 /**
  * Runs the FTP command SIZE - Name list of remote directory.
+ * @function
  * @param {string} filepath - The location of the file to retrieve size from.
  * @param {function} callback - The callback function to be issued.
  */
-FTP.prototype.size = SimpleCue.create('SIZE');
+FTP.prototype.size = SimpleQueue.create('SIZE');
 
 
 /**
@@ -1658,8 +1662,8 @@ FTP.prototype.port = function (port, callback) {
  * Runs the FTP command QUIT - Terminate the connection.
  * @param {function} callback - The callback function to be issued.
  */
-FTP.prototype.quit = function (callback, runNow, holdCue) {
-	ftp.run('QUIT', callback, runNow, holdCue);
+FTP.prototype.quit = function (callback, runNow, holdQueue) {
+	ftp.run('QUIT', callback, runNow, holdQueue);
 };
 
 
@@ -1703,7 +1707,7 @@ FTP.prototype.rename = function (paths, callback) {//{{{
     var from = paths[0],
         to = paths[1];
 
-    //run this in a cue
+    //run this in a queue
     ftp.run('RNFR ' + from, function (err, data) {
         if (err) {
             callback.call(callback, err, data);
@@ -1729,19 +1733,19 @@ FTP.prototype.site = function () {
 
 /**
  * Runs the FTP command TYPE - Set transfer type (default ASCII) - <b>will be added in next patch</b>
- * @param {string} type - set to this type: 'ascii', 'ebcdic', 'image', 'lbyte'
+ * @param {string} type - set to this type: 'ascii', 'ebcdic', 'binary', 'local'
  * @param {string} secondType - 'nonprint', 'telnet', 'asa'
  */
-FTP.prototype.type = function (type, secondType, callback, runNow, holdCue) {
+FTP.prototype.type = function (type, secondType, callback, runNow, holdQueue) {
     var that = this,
         cmd = '';
     if (typeof secondType === 'function') {
-        holdCue = runNow;
+        holdQueue = runNow;
         runNow = callback;
         callback = secondType;
     }
     if (undefined === type || undefined === that.typeMap[type]) {
-        throw new Error('ftp.type > parameter 1 expected valid FTP TYPE; [ascii, binary, ebcdic, local]');
+        return callback(new Error('ftp.type > parameter 1 expected valid FTP TYPE; [ascii, binary, ebcdic, local]'), null);
     }
     cmd = that.typeMap[type];
     if (undefined !== secondType && undefined === that.secondTypeMap[secondType]) {
@@ -1749,7 +1753,7 @@ FTP.prototype.type = function (type, secondType, callback, runNow, holdCue) {
     }
     //update currentType and run
     ftp.currentType = type;
-    ftp.run('TYPE ' + cmd, callback, runNow, holdCue);
+    ftp.run('TYPE ' + cmd, callback, runNow, holdQueue);
 };
 
 /**
@@ -1757,13 +1761,13 @@ FTP.prototype.type = function (type, secondType, callback, runNow, holdCue) {
  * based on the path provided
  * @params {string} filepath - the path to the file being transferred
  */
-FTP.prototype.setType = function (filepath, callback, runNow, holdCue) {
+FTP.prototype.setType = function (filepath, callback, runNow, holdQueue) {
     var ext;
     if (filepath.indexOf('.') > -1) {
 		//dot files eg .htaccess 
         if (filepath.indexOf('.') === 0) {
             if (ftp.currentType !== 'ascii') {
-                ftp.type('ascii', callback, runNow, holdCue);
+                ftp.type('ascii', callback, runNow, holdQueue);
             } else {
                 callback();
             }
@@ -1771,18 +1775,18 @@ FTP.prototype.setType = function (filepath, callback, runNow, holdCue) {
             ext = filepath.split('.').pop();
             if (undefined === ftp.ascii[ext]) {
                 if (ftp.currentType !== 'ascii') {
-                    ftp.type('ascii', callback, runNow, holdCue);
+                    ftp.type('ascii', callback, runNow, holdQueue);
                 } else {
                     callback();
                 }
             } else if (ftp.currentType === 'ascii') {
-                ftp.type('binary', callback, runNow, holdCue);
+                ftp.type('binary', callback, runNow, holdQueue);
             } else {
                 callback();
             }
         }
     } else if (ftp.currentType !== 'ascii') {
-        ftp.type('ascii', callback, runNow, holdCue);
+        ftp.type('ascii', callback, runNow, holdQueue);
     } else {
         callback();
     }

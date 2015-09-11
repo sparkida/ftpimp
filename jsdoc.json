@@ -6,9 +6,9 @@
     "source": {
         "include": [
             "./README.md",
-            "./ftpimp-app.js",
+            "./index.js",
             "./lib",
-            "./config.sample.json"
+            "./config.sample.js"
         ],
         "exclude": [
             "./node_modules"
