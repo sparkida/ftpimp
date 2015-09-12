@@ -3,6 +3,13 @@ FTPimp V2.0a :: stable
 FTP client for Windows and OSX / Linux.<br>
 FTPimp is an (imp)roved implementation of the FTP service API for NodeJS. It has unique features that you'd otherwise expect an FTP client to have...
 
+
+Examples
+--------
+
+**Tests provide an example for every (practical) endpoint in the library,** [see those here](https://github.com/sparkida/ftpimp/blob/master/test/index.js).
+
+
 Features
 --------
 FTPimp has several major benefits in comparison to other Node FTP clients:
@@ -35,13 +42,8 @@ Each call with ftp is sequential, if you make calls inside of calls, they are co
 
 
 
-Examples
---------
-
-**Tests provide an example for every (practical) endpoint in the library,** [see those here](https://github.com/sparkida/ftpimp/blob/master/test/index.js).
-
-
-###Callbacks
+Callbacks
+---------
 Almost every method allows for a callback to be passed as a parameter and almost every
 callback will follow the general parameter form of 
 ```javascript
@@ -50,7 +52,11 @@ function (error, result) {...
 The only exception will be in the cases where no parameters are passed to the callback
 such as in `FTP.connect(callback)`.
 
-###Default config
+
+
+
+Default config
+--------------
 ```javascript
 var config = {
         host: 'localhost',
@@ -61,7 +67,13 @@ var config = {
     };
 ```
 
-###Automatically login to FTP and run callback when ready
+
+Samples
+=======
+
+
+- Automatically login to FTP and run callback when ready
+
 ```javascript
 var FTP = require('ftpimp'),
     ftp = FTP.create(config),
@@ -72,7 +84,8 @@ var FTP = require('ftpimp'),
 ftp.events.once('ready', connected);
 ```
 
-###Setup FTPimp and login whenever
+- Setup FTPimp and login whenever
+
 ```javascript
 var FTP = require('ftpimp'),
     ftp = FTP.create(config, false);
@@ -83,7 +96,8 @@ ftp.connect(function () {
 });
 ```
 
-###Recursively create directories and delete them.
+- Recursively create directories and delete them.
+
 ```javascript
 //create a temporary directory name
 var tempDir = 'foo' + String(new Date().getTime()),
@@ -103,10 +117,13 @@ ftp.mkdir(tempDir + '/some/deep/directory', function (err, data) {
 ```
 
 
+
 Find a Bug?
 -----------
 Please let me know so that I can fix it ASAP, cheers 
 [&not;Report a Bug](https://github.com/sparkida/ftpimp/issues)
+
+
 
 
 Updates

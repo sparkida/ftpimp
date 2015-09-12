@@ -1,0 +1,1 @@
+rsync -vaz --delete-after --exclude sync --exclude 'wiki' . spk:./www/ftpimp/

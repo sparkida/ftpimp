@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset
+      xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9
+            http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">
+<!-- created with Free Online Sitemap Generator www.xml-sitemaps.com -->
+
+<url>
+  <loc>http://ftpimp.net/</loc>
+  <lastmod>2015-04-25T20:42:24+00:00</lastmod>
+  <priority>1.00</priority>
+</url>
+<url>
+  <loc>http://ftpimp.net/index.html</loc>
+  <lastmod>2015-04-25T20:42:24+00:00</lastmod>
+  <priority>0.80</priority>
+</url>
+<url>
+  <loc>http://ftpimp.net/module-lib_command.html</loc>
+  <lastmod>2015-04-25T20:17:06+00:00</lastmod>
+  <priority>0.80</priority>
+</url>
+<url>
+  <loc>http://ftpimp.net/CMD.html</loc>
+  <lastmod>2015-04-25T20:17:06+00:00</lastmod>
+  <priority>0.80</priority>
+</url>
+<url>
+  <loc>http://ftpimp.net/FTP.html</loc>
+  <lastmod>2015-04-25T20:17:06+00:00</lastmod>
+  <priority>0.80</priority>
+</url>
+<url>
+  <loc>http://ftpimp.net/FTP_Handle.html</loc>
+  <lastmod>2015-04-25T20:17:06+00:00</lastmod>
+  <priority>0.80</priority>
+</url>
+<url>
+  <loc>http://ftpimp.net/FTP_SimpleCue.html</loc>
+  <lastmod>2015-04-25T20:17:06+00:00</lastmod>
+  <priority>0.80</priority>
+</url>
+<url>
+  <loc>http://ftpimp.net/FTP_StatObject.html</loc>
+  <lastmod>2015-04-25T20:17:06+00:00</lastmod>
+  <priority>0.80</priority>
+</url>
+<url>
+  <loc>http://ftpimp.net/lib_command.js.html</loc>
+  <lastmod>2015-04-25T20:17:06+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>http://ftpimp.net/ftpimp-app.js.html</loc>
+  <lastmod>2015-04-25T20:17:06+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+</urlset>

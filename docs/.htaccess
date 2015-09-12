@@ -1,0 +1,30 @@
+suPHP_ConfigPath /home/scr3wl05/php
+
+Options +FollowSymLinks
+RewriteEngine On
+RewriteBase /
+
+
+#redirect www
+RewriteCond %{HTTP_HOST} !^ftpimp.com$ [NC]
+RewriteRule ^(.*)$ http://ftpimp.com/$1 [R=301,L]
+
+#cache resources
+<filesMatch "\.(js|css|jpe?g|png|gif|swf|flv|ico|x-icon|pdf|avi|mov|ppt|doc|mp3|wmv|wav)$">
+Header unset ETag
+Header unset Last-Modified
+FileETag None
+Header set Cache-Control "max-age=32000, public"
+</filesMatch>
+
+
+#SSL/Portal
+<FilesMatch "\.(php|cgi|pl|htm|xsl|html)$">
+Header append Cache-Control "no-cache, no-store, proxy-revalidate, max-age=0, must-revalidate"
+</FilesMatch>
+
+
+#redirect to 
+RewriteCond %{REQUEST_FILENAME} -d [OR]
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteRule ^(.*)$ index.php/$1 [QSA,L]
