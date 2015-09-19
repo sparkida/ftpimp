@@ -7,8 +7,9 @@ var assert = require('assert'),
 	fs = require('fs'),
 	FTP = require('../'),
 	config = require('../config'),
+	path = require('path'),
 	ftp;
-//config.debug = false;
+config.debug = true;
 describe('FTPimp', function () {
 	//TODO - change to main
 	before(function (done) {
@@ -19,77 +20,41 @@ describe('FTPimp', function () {
 		ftp.connect(done);
 	});
 
-	var testDir = 'foo' + String(new Date().getTime());
-	describe('ls#LIST: list remote files', function () {
-		it ('succeeds', function (done) {
-			ftp.ls('', function (err, res) {
-				assert(Array.isArray(res));
-				done(err);
-			});
-		});
-		it ('fails', function (done) {
-			ftp.ls('somebadlookup', function (err, res) {
-				assert(err instanceof Error);
-				assert.equal(res, false);
-				done();
-			});
-		});
-	});
-	
-	describe('lsnames#NLST: name list of remote directory', function () {
-		it ('succeeds', function (done) {
-			ftp.lsnames('', function (err, res) {
-				assert(Array.isArray(res));
-				done(err);
-			});
-		});
-		it ('fails', function (done) {
-			ftp.lsnames('somebadlookup', function (err, res) {
-				assert(err instanceof Error);
-				assert.equal(res, false);
-				done();
-			});
-		});
-	});
-	
-	describe('lsnames#NLST: name list of remote directory', function () {
-		it ('succeeds', function (done) {
-			ftp.lsnames('', function (err, res) {
-				assert(Array.isArray(res));
-				done(err);
-			});
-		});
-		it ('fails', function (done) {
-			ftp.lsnames('somebadlookup', function (err, res) {
-				assert(err instanceof Error);
-				assert.equal(res, false);
-				done();
-			});
-		});
-	});
-	
-	describe('chdir#CWD: change working directory', function () {
-		it ('succeeds', function (done) {
-			ftp.chdir('', function (err, res) {
-				assert(typeof res === 'string');
-				done(err);
-			});
-		});
-		it ('fails', function (done) {
-			ftp.chdir('somebadlookup', function (err, res) {
-				assert(err instanceof Error);
-				assert(!res);
-				done();
+	describe('Simple commands have a "raw" property string of the command', function () {
+		var com = {
+				ls: 'LIST',
+				lsnames: 'NLST',
+				port: 'PORT',
+				pasv: 'PASV',
+				chdir: 'CWD',
+				mkdir: 'MKD',
+				rmdir: 'RMD',
+				type: 'TYPE',
+				rename: 'RNTO',
+				get: 'RETR',
+				filemtime: 'MDTM',
+				unlink: 'DELE',
+				getcwd: 'PWD',
+				ping: 'NOOP',
+				stat: 'STAT',
+				info: 'SYST',
+				abort: 'ABOR',
+				quit: 'QUIT'
+			};
+		Object.keys(com).forEach(function (key) {
+			it('FTP.prototyp.' + key + ' has raw ' + com[key], function () {
+				assert.equal(FTP.prototype[key].raw, com[key]);
 			});
 		});
 	});
 
+	var testDir = 'ftpimp.test.' + String(new Date().getTime()).slice(3) + '.tmp';
 	describe('mkdir#MKD: make a remote directory', function () {
 		it ('succeeds', function (done) {
-			ftp.mkdir(testDir, function (err, res) {
-				assert(typeof res === 'string');
+			ftp.mkdir(path.join(testDir, 'foo'), function (err, res) {
+				assert(res.length, 2, 'Could not add directories');
 				done(err);
-			});
+			}, true);
 		});
 		it ('fails', function (done) {
 			ftp.mkdir('', function (err, res) {
@@ -99,19 +64,19 @@ describe('FTPimp', function () {
 			});
 		});
 	});
-	
-	describe('rmdir#RMD: remove remote directory', function () {
-		it ('succeeds', function (done) {
-			ftp.rmdir(testDir, function (err, res) {
-				assert(res);
-				done(err);
-			});
-		});
+
+	describe('chdir#CWD: change working directory', function () {
 		it ('fails', function (done) {
-			ftp.rmdir('badDirectoryError', function (err, res) {
+			ftp.chdir('somebadlookup', function (err, res) {
 				assert(err instanceof Error);
 				assert(!res);
 				done();
+			});
+		});
+		it ('succeeds, changing to testDir - ' + testDir, function (done) {
+			ftp.chdir(testDir, function (err, res) {//testDir, function (err, res) {
+				assert(typeof res === 'string');
+				done(err);
 			});
 		});
 	});
@@ -171,12 +136,14 @@ describe('FTPimp', function () {
 		});
 	});
 	
-	
-	describe('put: transfer files to remote', function () {
+	describe('put: transfers files to remote', function () {
 		it ('succeeds', function (done) {
-			ftp.put('index.js', function (err, res) {
+			ftp.put(['./test/index.js', 'index.js'], function (err, res) {
 				assert.equal(res, 'index.js');
-				done(err);
+				ftp.put(['./test/test.png', 'test.png'], function (err, res) {
+					assert.equal(res, 'test.png');
+					done(err);
+				});
 			});
 		});
 		it ('fails', function (done) {
@@ -271,6 +238,38 @@ describe('FTPimp', function () {
 		});
 	});
 
+	describe('ls#LIST: list remote files', function () {
+		it ('succeeds', function (done) {
+			ftp.ls('', function (err, res) {
+				assert(Array.isArray(res));
+				done(err);
+			});
+		});
+		it ('fails', function (done) {
+			ftp.ls('somebadlookup', function (err, res) {
+				assert(err instanceof Error);
+				assert.equal(res, false);
+				done();
+			});
+		});
+	});
+	
+	describe('lsnames#NLST: name list of remote directory', function () {
+		it ('succeeds', function (done) {
+			ftp.lsnames('', function (err, res) {
+				assert(Array.isArray(res));
+				done(err);
+			});
+		});
+		it ('fails', function (done) {
+			ftp.lsnames('somebadlookup', function (err, res) {
+				assert(err instanceof Error);
+				assert.equal(res, false);
+				done();
+			});
+		});
+	});
+	
 	describe('unlink#DELE: delete remote file', function () {
 		it ('succeeds', function (done) {
 			ftp.unlink('ind.js', function (err, res) {
@@ -287,33 +286,64 @@ describe('FTPimp', function () {
 		});
 	});
 
+	describe('root: changes to root directory', function () {
+		it ('succeeds', function (done) {
+			ftp.root(function (err, res) {
+				assert(typeof res === 'string');
+				done(err);
+			});
+		});
+	});
+
+	describe('rmdir#RMD: recursively remove remote directory', function () {
+		it.only('should recursively remove the directory ' + testDir, function (done) {
+			//ftp.mkdir(testDir, function(){}, true);
+			ftp.mkdir(path.join(testDir, 'foo'), function(){}, true);
+			//TODO test multiple nested directories
+			//ftp.put(['./test/test.png', path.join(testDir, 'test.png')], function(){});
+			//ftp.put(['./test/test.png', path.join(testDir, 'foo', 'test.png')], function(){});
+			ftp.rmdir(testDir, function (err, res) {
+				console.log(err, res);
+				console.log(err, res);
+				console.log(err, res);
+				assert(!err, err);
+				assert.equal(res.length, 4);
+				done();
+			}, true);
+		});
+		it ('should remove the directory even if it is the only object to be removed', function (done) {
+			ftp.mkdir(testDir, function(){}, true);
+			ftp.rmdir(testDir, function (err, res) {
+				assert(!err, err);
+				assert.equal(res.length, 1);
+				done();
+			}, true);
+		});
+		it ('fails', function (done) {
+			ftp.rmdir('badDirectoryError', function (err, res) {
+				assert(err instanceof Error);
+				assert(!res);
+				done();
+			}, true);
+		});
+	});
 	
 	describe('General FTP commands', function () {
 		it ('ping#NOOP: do nothing, ping the remote server', function (done) {
 			ftp.ping(done);
 		});
-
 		it ('stat#STAT: get server status', function (done) {
 			ftp.stat(function (err, res) {
 				assert(typeof res === 'string');
 				done(err);
 			});
 		});
-
-		it ('root: changes to root directory', function (done) {
-			ftp.root(function (err, res) {
-				assert(typeof res === 'string');
-				done(err);
-			});
-		});
-
-		it ('getcwd: gets current working directory', function (done) {
+		it ('getcwd#PWD: gets current working directory', function (done) {
 			ftp.getcwd(function (err, res) {
 				assert(typeof res === 'string');
 				done(err);
 			});
 		});
-
 		it ('info#SYST: return system type', function (done) {
 			ftp.info(function (err, res) {
 				assert(typeof res === 'string');
