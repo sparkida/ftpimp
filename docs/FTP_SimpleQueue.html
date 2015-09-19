@@ -34,6 +34,8 @@
         SimpleQueue
         </h2>
         
+            <div class="class-description">DEPRECATED! use <a href="Queue.html">Queue</a></div>
+        
     
 </header>
 
@@ -43,81 +45,21 @@
         
 
     
+    <h2>Constructor</h2>
+    
 
-    <h4 class="name" id="SimpleQueue"><span class="type-signature"></span>new SimpleQueue<span class="signature">(command)</span><span class="type-signature"> &rarr; {function}</span></h4>
+    <h4 class="name" id="SimpleQueue"><span class="type-signature"></span>new SimpleQueue<span class="signature">()</span><span class="type-signature"></span></h4>
 
     
 
 
 
-<div class="description">
-    Provides a factory to create a simple queue procedure. Look
-at the example below to see how we override the callback
-function to perform additional actions before exiting
-the queue and loading the next one.<br>
-Functions created with this provide a synchronized queue
-that is asynchronous in itself, so items will be processed
-in the order they are received, but this will happen
-immediately. Meaning, if you make a dozen sequential calls
-to <a href="FTP.html#filemtime">FTP#filemtime</a> they will all be read immediately,
-queued in order, and then processed one after the other.
-</div>
 
 
 
 
 
 
-
-
-
-    <h5>Parameters:</h5>
-    
-
-<table class="params">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>command</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">string</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last">The command that will be issued ie: <b>"CWD foo"</b></td>
-        </tr>
-
-    
-    </tbody>
-</table>
 
 
 
@@ -153,7 +95,7 @@ queued in order, and then processed one after the other.
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="index.js.html">index.js</a>, <a href="index.js.html#line549">line 549</a>
+        <a href="index.js.html">index.js</a>, <a href="index.js.html#line2043">line 2043</a>
     </li></ul></dd>
     
 
@@ -162,13 +104,6 @@ queued in order, and then processed one after the other.
     
 
     
-    <dt class="tag-todo">To Do:</dt>
-    <dd class="tag-todo">
-        <ul>
-            <li>- make OO - double check endproc and then callback ? or callback and endproc</li>
-        </ul>
-    </dd>
-    
 </dl>
 
 
@@ -183,51 +118,6 @@ queued in order, and then processed one after the other.
 
 
 
-<h5>Returns:</h5>
-
-        
-<div class="param-desc">
-    queueManager - The simple queue manager
-</div>
-
-
-
-<dl>
-    <dt>
-        Type
-    </dt>
-    <dd>
-        
-<span class="param-type">function</span>
-
-
-    </dd>
-</dl>
-
-    
-
-
-    <h5>Example</h5>
-    
-    <pre class="prettyprint"><code>//the current implementation of FTP.rename is preferred,
-//this is merely being used as an example
-var myCustomRename = (function () {
-    var myQueueManager = ftp.SimpleQueue.create('RNFR');
-    return function (pathArray, callback) {
-        var from = pathArray[0],
-            to = pathArray[1];
-        //override the callback, SimpleQueue's expect the
-        //first parameter to be a string
-        myQueueManager(from, function (err, data) {
-            if (err) {
-                dbg(err);
-            } else {
-                //provide custom function and trigger callback when done
-                ftp.raw('RNTO ' + to, callback);
-            }
-        });
-    }
-}());</code></pre>
 
 
 
@@ -247,190 +137,6 @@ var myCustomRename = (function () {
     
 
     
-        <h3 class="subsection-title">Methods</h3>
-
-        
-            
-
-    
-
-    <h4 class="name" id="~queueManager"><span class="type-signature">(inner) </span>queueManager<span class="signature">(filepath, callback, runNow)</span><span class="type-signature"></span></h4>
-
-    
-
-
-
-<div class="description">
-    The queue manager returned when creating a new <a href="FTP_SimpleQueue.html">FTP#SimpleQueue</a> object
-</div>
-
-
-
-
-
-
-
-
-
-    <h5>Parameters:</h5>
-    
-
-<table class="params">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>filepath</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">string</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last">The location of the remote file to process the set command.</td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>callback</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">function</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last">The callback function to be issued.</td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>runNow</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">boolean</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last">Run the command immediately. Careful, concurrent connections
-will likely end in a socket error. This is meant for fine grained control over certain
-scenarios wherein the process is part of a running queue and you need to perform an ftp
-action prior to the FTP#endproc event firing and execing the next queue.</td>
-        </tr>
-
-    
-    </tbody>
-</table>
-
-
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="index.js.html">index.js</a>, <a href="index.js.html#line651">line 651</a>
-    </li></ul></dd>
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        
-    
 
     
 
@@ -445,13 +151,13 @@ action prior to the FTP#endproc event firing and execing the next queue.</td>
 </div>
 
 <nav>
-    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-lib_command.html">lib/command</a></li></ul><h3>Classes</h3><ul><li><a href="CMD.html">CMD</a></li><li><a href="FTP.html">FTP</a></li><li><a href="FTP_Handle.html">Handle</a></li><li><a href="FTP_SimpleQueue.html">SimpleQueue</a></li><li><a href="FTP_StatObject.html">StatObject</a></li></ul><h3>Events</h3><ul><li><a href="FTP.html#event:fileTransferComplete">fileTransferComplete</a></li><li><a href="FTP.html#event:queueEmpty">queueEmpty</a></li><li><a href="FTP.html#socket#event:error">error</a></li><li><a href="FTP.html#socket#event:ready">ready</a></li></ul><h3>Namespaces</h3><ul><li><a href="FTP.html#socket">socket</a></li></ul>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-lib_command.html">lib/command</a></li></ul><h3>Classes</h3><ul><li><a href="CMD.html">CMD</a></li><li><a href="FTP.html">FTP</a></li><li><a href="FTP.Queue.html">Queue</a></li><li><a href="FTP.StatObject.html">StatObject</a></li><li><a href="FTP_Handle.html">Handle</a></li><li><a href="FTP_SimpleQueue.html">SimpleQueue</a></li></ul><h3>Events</h3><ul><li><a href="FTP.html#event:fileTransferComplete">fileTransferComplete</a></li><li><a href="FTP.html#event:queueEmpty">queueEmpty</a></li><li><a href="FTP.html#socket#event:error">error</a></li><li><a href="FTP.html#socket#event:ready">ready</a></li></ul><h3>Namespaces</h3><ul><li><a href="FTP.debug.html">debug</a></li></ul><h3>Mixins</h3><ul><li><a href="EventEmitter.html">EventEmitter</a></li></ul>
 </nav>
 
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.3.0-beta3</a> on Sat Sep 12 2015 09:23:08 GMT-0700 (PDT)
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.3.0-beta3</a> on Sat Sep 19 2015 03:55:59 GMT-0700 (PDT)
 </footer>
 
 <script> prettyPrint(); </script>

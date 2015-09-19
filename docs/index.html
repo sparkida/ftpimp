@@ -43,9 +43,8 @@
 
 
     <section>
-        <article><h1>FTPimp V2.0a :: stable</h1><p>FTP client for Windows and OSX / Linux.<br>
-FTPimp is an (imp)roved implementation of the FTP service API for NodeJS. It has unique features that you'd otherwise expect an FTP client to have...</p>
-<h2>Examples</h2><p><strong>Tests provide an example for every (practical) endpoint in the library,</strong> <a href="https://github.com/sparkida/ftpimp/blob/master/test/index.js">see those here</a>.</p>
+        <article><h1>FTPimp V2.0.1 :: stable</h1><p>FTP client for Windows and OSX / Linux.</p>
+<p>FTPimp is an (imp)roved implementation of the FTP service API for NodeJS. It has unique features that you'd otherwise expect an FTP client to have...</p>
 <h2>Features</h2><p>FTPimp has several major benefits in comparison to other Node FTP clients:</p>
 <ul>
 <li>Recursively put files, and create directories</li>
@@ -56,25 +55,26 @@ FTPimp is an (imp)roved implementation of the FTP service API for NodeJS. It has
 <li>Easily work with every step of the event based FTP process</li>
 <li>Propietary queue and helper methods for controlling flow and easily extending FTPimp's functionality</li>
 </ul>
-<h2>API Documentation</h2><p>For a full breakdown of this API, including examples <a href="http://ftpimp.net">&not;FTPimp.net</a></p>
-<h2>Additional Info</h2><p>I have a working implementation of FTPimp in a file synchronization manager, built for developers in rapid release / multi-project scenarios, that I'll be releasing within the week to demonstrate.</p>
-<ul>
-<li>by default, FTPimp uses passive connections for security purposes, but <strong>you can override anything</strong> you want pretty quickly to build a very robust FTP application. </li>
-<li>every queue runs on the same level the command was executed in and each queued command has the ability to group a series of commands into a single queue, this allows you to chain methods for building procedures such as the recursive mkdir procedure, which does exactly what it says: recurses through the FTP.mkdir command in a single queue.</li>
-</ul>
-<p>...TL;DR...</p>
-<p>Each call with ftp is sequential, if you make calls inside of calls, they are considered children.</p>
-<h2>Callbacks</h2><p>Almost every method allows for a callback to be passed as a parameter and almost every
-callback will follow the general parameter form of </p>
-<pre class="prettyprint source lang-javascript"><code>function (error, result) {...</code></pre><p>The only exception will be in the cases where no parameters are passed to the callback
-such as in <code>FTP.connect(callback)</code>.</p>
+<h2>API Documentation</h2><p><a href="http://ftpimp.net">Documentation for ftp-imp</a> can be found at the website <a href="http://ftpimp.net">&not;http://ftpimp.net</a></p>
+<p>Tests provide an example for every (practical) endpoint in the library <a href="https://github.com/sparkida/ftpimp/blob/master/test/index.js">&not;see those here</a>.</p>
 <h2>Default config</h2><pre class="prettyprint source lang-javascript"><code>var config = {
         host: 'localhost',
         port: 21,
         user: 'root',
         pass: '',
         debug: false
-    };</code></pre><h1>Samples</h1><ul>
+    };</code></pre><h2>Running pure FTP commands</h2><p><strong>FTPimp's API exposes two main commands</strong> to enable you full control over the flow of your application:</p>
+<ol>
+<li><a href="http://ftpimp.net/FTP.html#raw">FTP.raw</a> - allows you to immediately issue any FTP command; does not enqueue items;</li>
+<li><a href="http://ftpimp.net/FTP.html#run">FTP.run</a> - allows you to issue any FTP command; will add items at the end of the queue by default, but also has a <a href="file:///home/nick/ftpimp/docs/FTP.Queue.html#.RunLevels">runLevel</a> for more granular control; also see helpers <a href="http://ftpimp.net/FTP.html#runNow">FTP.runNow</a> and <a href="http://ftpimp.net/FTP.html#runNext">FTP.runNext</a>;</li>
+</ol>
+<p><strong><em>NOTE: FTP.raw commands run outside of the queue and typically must be called when the queue is empty.</em></strong></p>
+<h2>Callbacks</h2><p>Almost every method allows for a callback to be passed as a parameter and almost every
+callback will follow the general parameter form of </p>
+<pre class="prettyprint source lang-javascript"><code>function (error, result) {...</code></pre><p>The only exception will be in the cases where no parameters are passed to the callback
+such as in <code>FTP.connect(callback)</code>.</p>
+<h2>Examples</h2><p><strong>Tests provide an example for every (practical) endpoint in the library,</strong> <a href="https://github.com/sparkida/ftpimp/blob/master/test/index.js">see those here</a>.</p>
+<ul>
 <li>Automatically login to FTP and run callback when ready</li>
 </ul>
 <pre class="prettyprint source lang-javascript"><code>var FTP = require('ftpimp'),
@@ -109,7 +109,40 @@ ftp.mkdir(tempDir + '/some/deep/directory', function (err, data) {
             console.log(err, data);   
         });
     }
-}, recursive);</code></pre><h2>Find a Bug?</h2><p>Please let me know so that I can fix it ASAP, cheers 
+}, recursive);</code></pre><h2>Process Flow</h2><h3>Understanding FTPimp's proprietary Queue</h3>
+
+<ul>
+<li>Every queue runs on the same level the command was executed in and each queued command has the ability to group a series of commands into a single queue, this allows you to chain methods for building procedures such as the recursive mkdir procedure, which does exactly what it says: recurses through the FTP.mkdir command in a single queue.</li>
+</ul>
+<p><strong><em>...TL;DR...</em></strong></p>
+<ul>
+<li><p>Each call with ftp is sequential, if you make calls inside of calls, they are considered children.</p>
+</li>
+<li><p>Nested calls will run in the order they were issued. Encapsulated methods will only complete once all nested calls have completed.</p>
+<ul>
+<li><p>right way</p>
+<pre class="prettyprint source lang-javascript"><code>ftp.put('foo.js', function (err, res) {
+  if (!err) {
+      ftp.raw('MDTM foo.js', function (err, res) {
+          //...
+      });
+  }
+});</code></pre></li>
+<li><p>wrong way</p>
+<pre class="prettyprint source lang-javascript"><code>
+ftp.put('foo.js', function (err, res) {
+  //...
+});
+ftp.raw('MDTM foo.js', function (err, res) {
+  //...
+});</code></pre></li>
+</ul>
+</li>
+</ul>
+<h2>FTP Connection Types</h2><h3>Passive vs Active</h3>
+
+<p>By default, FTPimp uses passive connections for security purposes, but <strong>you can override anything</strong> you want pretty quickly to build a very robust FTP application. </p>
+<h2>Find a Bug?</h2><p>Please let me know so that I can fix it ASAP, cheers 
 <a href="https://github.com/sparkida/ftpimp/issues">&not;Report a Bug</a></p>
 <h2>Updates</h2><ul>
 <li>Sep 10, 2015 7:46am(PDT) - v2.0.0a! Alpha release. Major changes in architecture, 100% backwards compatible with v1.0+, documentation updated, testing suite moved to Mocha!<ul>
@@ -157,13 +190,13 @@ ftp.mkdir(tempDir + '/some/deep/directory', function (err, data) {
 </div>
 
 <nav>
-    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-lib_command.html">lib/command</a></li></ul><h3>Classes</h3><ul><li><a href="CMD.html">CMD</a></li><li><a href="FTP.html">FTP</a></li><li><a href="FTP_Handle.html">Handle</a></li><li><a href="FTP_SimpleQueue.html">SimpleQueue</a></li><li><a href="FTP_StatObject.html">StatObject</a></li></ul><h3>Events</h3><ul><li><a href="FTP.html#event:fileTransferComplete">fileTransferComplete</a></li><li><a href="FTP.html#event:queueEmpty">queueEmpty</a></li><li><a href="FTP.html#socket#event:error">error</a></li><li><a href="FTP.html#socket#event:ready">ready</a></li></ul><h3>Namespaces</h3><ul><li><a href="FTP.html#socket">socket</a></li></ul>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-lib_command.html">lib/command</a></li></ul><h3>Classes</h3><ul><li><a href="CMD.html">CMD</a></li><li><a href="FTP.html">FTP</a></li><li><a href="FTP.Queue.html">Queue</a></li><li><a href="FTP.StatObject.html">StatObject</a></li><li><a href="FTP_Handle.html">Handle</a></li><li><a href="FTP_SimpleQueue.html">SimpleQueue</a></li></ul><h3>Events</h3><ul><li><a href="FTP.html#event:fileTransferComplete">fileTransferComplete</a></li><li><a href="FTP.html#event:queueEmpty">queueEmpty</a></li><li><a href="FTP.html#socket#event:error">error</a></li><li><a href="FTP.html#socket#event:ready">ready</a></li></ul><h3>Namespaces</h3><ul><li><a href="FTP.debug.html">debug</a></li></ul><h3>Mixins</h3><ul><li><a href="EventEmitter.html">EventEmitter</a></li></ul>
 </nav>
 
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.3.0-beta3</a> on Sat Sep 12 2015 09:23:08 GMT-0700 (PDT)
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.3.0-beta3</a> on Sat Sep 19 2015 03:55:59 GMT-0700 (PDT)
 </footer>
 
 <script> prettyPrint(); </script>
