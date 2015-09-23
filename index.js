@@ -546,7 +546,7 @@ FTP.prototype.queue = {//{{{
     },
     register: function (callback, prependToQueue) {
         dbg('Queue> Registering callback...');
-        dbg('Queue> processing: ' + ftp.queue.processing + ' size: ' + ftp.queue._queue.length);
+        dbg('Queue> processing: ' + ftp.queue.processing + '; size: ' + ftp.queue._queue.length);
         prependToQueue = prependToQueue === undefined ? false : prependToQueue;
         if (prependToQueue) {
             ftp.queue._queue.unshift(callback);
@@ -1378,16 +1378,18 @@ FTP.prototype.rmdir = function (dirpath, callback, recursive, runLevel, holdQueu
 				dbg('need to ls directory', data);
 				dbg('need to ls directory', data);
 				dbg('need to ls directory', data);
-				dbg('need to ls directory', data);
-				dbg('need to ls directory', data);
-				ftp.ls(data, handleFileList, Queue.RunNow, true);
-				ftp.runNext(FTP.prototype.rmdir.raw + ' ' + dirpath, function (err, res) {
-					dbg('---------ending------------');
-					dbg('---------ending------------');
-					dbg('---------ending------------');
-					dbg('---------ending------------');
-					dbg(err, res);
-				}, holdQueue);
+				//open the queue immediately
+				ftp.ls(data, function () {
+					var done = function () {
+						ftp.runNext(FTP.prototype.rmdir.raw + ' ' + dirpath, function (err, res) {
+							dbg('---------ending------------');
+							dbg('---------ending------------');
+							dbg('---------ending------------');
+							dbg(err, res);
+						}, holdQueue);
+					};
+					handleFileList(done);
+				}, Queue.RunNow, holdQueue);
 			}
 		};
     ftp.run(FTP.prototype.rmdir.raw + ' ' + dirpath, checkDir, runLevel, holdQueue);

@@ -298,7 +298,9 @@ describe('FTPimp', function () {
 	describe('rmdir#RMD: recursively remove remote directory', function () {
 		it.only('should recursively remove the directory ' + testDir, function (done) {
 			//ftp.mkdir(testDir, function(){}, true);
-			ftp.mkdir(path.join(testDir, 'foo'), function(){}, true);
+			ftp.mkdir(path.join(testDir, 'foo'), function(){
+				ftp.debug.enable();
+			}, true);
 			//TODO test multiple nested directories
 			//ftp.put(['./test/test.png', path.join(testDir, 'test.png')], function(){});
 			//ftp.put(['./test/test.png', path.join(testDir, 'foo', 'test.png')], function(){});
