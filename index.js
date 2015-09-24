@@ -1345,9 +1345,24 @@ FTP.prototype.rmdir = function (dirpath, callback, recursive, runLevel, holdQueu
 								dbg('file unlinked: '.yellow, item.filename);
 								deleted.push(item.filename);
 							}
+								console.log('pending1: ', pending);
+							if (pending === 0) {
+								ftp.runNext(ftp.rmdir.raw + ' ' + dirpath, function (err, res) {
+									if (deleted.indexOf(dirpath) === -1) {
+										deleted.push(dirpath);
+									}
+									console.log('last file removed');
+									console.log('last file removed');
+									console.log('last file removed');
+									console.log('last file removed');
+									console.log('last file removed');
+									console.log('last file removed');
+									callback(err, deleted);
+								}, holdQueue);
+							}
 						};
 					cmd += ' ' + path.join(dirpath, item.filename);
-					ftp.runNow(cmd, handleDeleteResponse, true);
+					ftp.runNext(cmd, handleDeleteResponse, holdQueue);
 				};
 
 			if (err) {
@@ -1358,6 +1373,7 @@ FTP.prototype.rmdir = function (dirpath, callback, recursive, runLevel, holdQueu
 				pending += data.length;
 				data.forEach(bindUnlinkHandler);
 			}
+			console.log('pending1: ', pending);
 		},
 		checkDir = function (err, data) {
 			console.log(err, data);
@@ -1378,21 +1394,11 @@ FTP.prototype.rmdir = function (dirpath, callback, recursive, runLevel, holdQueu
 				dbg('need to ls directory', data);
 				dbg('need to ls directory', data);
 				dbg('need to ls directory', data);
-				//open the queue immediately
-				ftp.ls(data, function () {
-					var done = function () {
-						ftp.runNext(FTP.prototype.rmdir.raw + ' ' + dirpath, function (err, res) {
-							dbg('---------ending------------');
-							dbg('---------ending------------');
-							dbg('---------ending------------');
-							dbg(err, res);
-						}, holdQueue);
-					};
-					handleFileList(done);
-				}, Queue.RunNow, holdQueue);
+				//open the queue immediately after this callback
+				ftp.ls(data, handleFileList, Queue.RunNext, holdQueue);
 			}
 		};
-    ftp.run(FTP.prototype.rmdir.raw + ' ' + dirpath, checkDir, runLevel, holdQueue);
+    ftp.run(ftp.rmdir.raw + ' ' + dirpath, checkDir, runLevel, holdQueue);
 };//}}}
 FTP.prototype.rmdir.raw = 'RMD';
 
