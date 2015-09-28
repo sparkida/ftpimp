@@ -334,9 +334,11 @@ describe('FTPimp', function () {
 		});*/
 		it ('should recursively remove the directory ' + testDir, function (done) {
 			this.timeout(10000);
+			/*
 			ftp.mkdir(path.join(testDir, 'foo'), function(){
-				ftp.debug.enable();
+				var gcount = 0;
 				ftp.put(['./test/test.png', path.join(testDir, 'foo', 'test.png')], function(){
+					gcount++;
 					console.log();
 					console.log();
 					console.log();
@@ -347,23 +349,48 @@ describe('FTPimp', function () {
 					console.log('11running RMD now!!');
 					console.log();
 					console.log();
+					console.log()
 					console.log();
-					console.log();
+					console.log(gcount);
 				
 				}, Queue.RunNext);
-				ftp.put(['./test/test.png', path.join(testDir, 'foo.png')], function(){}, Queue.RunNext);
+				ftp.put(['./test/test.png', path.join(testDir, 'foo.png')], function(){
+					gcount++;
+					console.log(14124);
+				}, Queue.RunNext);
 				ftp.put(['./test/test.png', path.join(testDir, 'foo2.png')], function(){
+					gcount++;
+					console.log(151515125);
 				}, Queue.RunNext);
 			}, true);
 
-
+			/*
 			ftp.rmdir(testDir, function (err, res) {
 				assert(!err, err);
 				assert.equal(res.length, 4);
 				done();
 			}, true);
-			/*ftp.ping(function () {
-				console.log('ping done');
+*/
+			ftp.ls(testDir + '-0', function (err, res) {
+				console.log(1);
+				console.log(err, res);
+			});
+			ftp.ls(testDir + '-1', function (err, res) {
+				console.log(2);
+				console.log(err, res);
+			});
+			ftp.ls(testDir + '-2', function (err, res) {
+				console.log(3);
+				console.log(err, res);
+			}, Queue.RunNext);
+			ftp.ls(testDir + '-3', function (err, res) {
+				console.log(4);
+				console.log(err, res);
+			});
+			/*
+			ftp.ls(testDir, function (err, res) {
+				console.log();
+				console.log(err, res);
 			});*/
 		});
 		/*it ('fails', function (done) {

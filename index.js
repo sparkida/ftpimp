@@ -251,27 +251,6 @@ FTP.prototype.cwd = '';
  */
 FTP.prototype.baseDir = '';
 
-/** 
- * Set when the next transfer is data and not file specific.
- * @type {boolean}
- * @alias FTP#baseDir
- */
-FTP.prototype.queueDataTransfer = false;
-
-/** 
- * A list of registered data transfer types; happens automatically.
- * @type {array}
- * @alias FTP#dataTransferTypes
- */
-FTP.prototype.dataTransferTypes = [];
-
-/** 
- * Stored procedures for data transfer types; automatically managed.
- * @type {object}
- * @alias FTP#dataTransferHook
- */
-FTP.prototype.dataTransferHook = {};
-
 /**
  * Creates and returns a new FTP connection handler
  * @returns {object} The new Handle instance
@@ -522,7 +501,7 @@ FTP.prototype.run = function (command, callback, runLevel, holdQueue) {//{{{
     } else if (undefined === callback || typeof callback !== 'function') {
         throw new Error('ftp.run > parameter 2 expected a callback function');
     }
-	dbg('ftp.Run: ' + [runLevel, holdQueue, command].join(' ').cyan);
+	dbg('ftp.Run: ' + [, holdQueue, command].join(' ').cyan);
 	ftp.queue.register(callbackConstruct, runLevel);
 };//}}}
 
@@ -643,7 +622,6 @@ FTP.prototype.on('endproc', FTP.prototype.queue.run);//}}}
  */
 var Queue = function (command) {//{{{
     var running = false,
-        init = true,
         that = this,
         queue = {},
         queueIndex = [],
@@ -652,25 +630,26 @@ var Queue = function (command) {//{{{
         curId = '',
         id,
         queueManager,
+		qcount = 0,
         runQueue = function (overRunNow) {
-            dbg('queueIndex length> ' + queueIndex.length);
+            dbg('ftp.Queue length> ' + queueIndex.length, overRunNow);
             if (queueIndex.length === 0) {
                 dbg('ftp.Queue> Empty ... stopping'.yellow);
-				console.log(cur);
 				if (!cur.holdQueue) {
 					ftp.emit('endproc');
 				}
-                //stop this queue
                 running = false;
                 return;
-            }
-            dbg(('ftp.Queue::' + command + '> Running').cyan);
+            } else {
+				ftp.emit('endproc');
+			}
+            dbg('ftp.Queue running>'.cyan, command);
             running = true;
             curId = queueIndex.shift();
             cur = queue[curId];
             queue[curId] = null;
             delete queue[curId];
-            dbg(('ftp.Queue:: loaded queue > ' + cur.id + ' == ' + curId).cyan);
+            dbg('ftp.Queue:: loaded queue > '.cyan, cur.id);
             var portHandler = function () {
                     hook = undefined === that[command + 'Hook'] ? null : that[command + 'Hook'];
                     dbg('hook: ' + typeof hook);
@@ -679,16 +658,24 @@ var Queue = function (command) {//{{{
                         if (typeof hook === 'function') {
                             data = hook(data);
                         }
-                        cur.callback.call(cur, err, data);
-                    });
+                        cur.callback(err, data);
+						runQueueNow();
+                    }, true);
                 };
             dbg(('ftp.Queue::' + command + '> Opening data port').cyan);
             ftp.setType(cur.filepath, function () {
-                ftp.openDataPort(portHandler, overRunNow === undefined ? cur.runLevel : overRunNow, cur.holdQueue);
-            }, Queue.RunNow, true);
+				console.log('type set');
+                ftp.openDataPort(portHandler, Queue.RunNext);
+            }, cur.runLevel);
+            //ftp.once('dataPortClosed', runQueueNow);
+            ftp.once('transferError', disable);
         },
         runQueueNow = function () {
             dbg('running queue now');
+			try {
+				ftp.removeListener('transferError', disable);
+			} catch (eListenerUndefined) {
+			}
             runQueue(true);
         },
         disable = function () {
@@ -709,13 +696,9 @@ var Queue = function (command) {//{{{
      * action prior to the {@link FTP#endproc} event firing and execing the next queue.
      */
     queueManager = function (filepath, callback, runLevel, holdQueue) {
-        if (init) {
-            init = false;
-            ftp.on('dataTransferComplete', runQueueNow);
-            ftp.on('transferError', disable);
-        }
-        id = new Date().getTime() + '-' + Math.floor((Math.random() * 999) + 100);
-        dbg('Creating Queue > ' + id + ' > ' + command + ' ' + filepath);
+		qcount += 1;
+        id = 'q' + qcount;
+        console.log('Creating Queue > ' + id + ' > ' + command + ' ' + filepath);
         queue[id] = {
             id: id,
             callback: callback,
@@ -724,7 +707,7 @@ var Queue = function (command) {//{{{
             holdQueue: holdQueue
         };
         queueIndex.push(id);
-        dbg('Queue is ' + (running ? 'running' : 'empty...loading'));
+        console.log('Queue is ' + (running ? 'running' : 'empty...loading'));
         if (!running) {
             runQueue();
         }
@@ -818,7 +801,6 @@ Queue.RunLast = Queue.RunLevels.last;
  * @param {string} command - The command that will be issued, no parameters, ie: <b>"CWD"</b>
  */
 Queue.create = function (command) {//{{{
-    FTP.prototype.dataTransferTypes.push(command);
     return new Queue(command);
 };//}}}
 
@@ -999,6 +981,10 @@ FTP.prototype.connect = function (callback) {//{{{
  */
 FTP.prototype.openDataPort = function (callback, runLevel, holdQueue) {//{{{
 	holdQueue = !!holdQueue;
+	console.log('holdQ: ', holdQueue);
+	console.log('holdQ: ', holdQueue);
+	console.log('holdQ: ', holdQueue);
+	console.log('holdQ: ', holdQueue);
     var dataHandler = function (err, data) {
             if (err) {
                 dbg('error opening data port with PASV');
@@ -1023,6 +1009,7 @@ FTP.prototype.openDataPort = function (callback, runLevel, holdQueue) {//{{{
                 dbg('----> pipe end ----');
                 ftp.pipeClosed = true;
                 ftp.openPipes -= 1;
+				ftp.emit('dataPortClosed');
             });
             /*if (ftp.config.debug) {
                 ftp.pipe.on('data', function (data) {
@@ -1184,7 +1171,7 @@ FTP.prototype.put = (function () {//{{{
         //into the pipeFile callback
         dbg('>queueing file for put process: "' + localPath + '" to "' + remotePath + '"');
         pipeFile = function (err, filedata) {
-            dbg(('>piping file: ' + localPath).green);
+            console.log(('>piping file: ' + localPath).green);
             if (err) {
                 dbg('>file read error', err);
                 queue = {
