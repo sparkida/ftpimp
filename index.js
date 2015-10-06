@@ -621,102 +621,52 @@ FTP.prototype.on('endproc', FTP.prototype.queue.run);//}}}
  * }());
  */
 var Queue = function (command) {//{{{
-    var running = false,
-        that = this,
-        queue = {},
-        queueIndex = [],
-        hook,
-        cur,
-        curId = '',
-        id,
-        queueManager,
-		qcount = 0,
-        runQueue = function (overRunNow) {
-            dbg('ftp.Queue length> ' + queueIndex.length, overRunNow);
-            if (queueIndex.length === 0) {
-                dbg('ftp.Queue> Empty ... stopping'.yellow);
-				if (!cur.holdQueue) {
-					ftp.emit('endproc');
+	var queue = this;
+	queue.command = command;
+	
+	return queue.builder;
+
+	/*
+	var portHandler = function () {
+			hook = undefined === that[command + 'Hook'] ? null : that[command + 'Hook'];
+			dbg('hook: ' + typeof hook);
+			//hook data into custom instance function
+			ftp.runNow(command + ' ' + cur.filepath, function (err, data) {
+				if (typeof hook === 'function') {
+					data = hook(data);
 				}
-                running = false;
-                return;
-            } else {
-				ftp.emit('endproc');
-			}
-            dbg('ftp.Queue running>'.cyan, command);
-            running = true;
-            curId = queueIndex.shift();
-            cur = queue[curId];
-            queue[curId] = null;
-            delete queue[curId];
-            dbg('ftp.Queue:: loaded queue > '.cyan, cur.id);
-            var portHandler = function () {
-                    hook = undefined === that[command + 'Hook'] ? null : that[command + 'Hook'];
-                    dbg('hook: ' + typeof hook);
-                    //hook data into custom instance function
-                    ftp.runNow(command + ' ' + cur.filepath, function (err, data) {
-                        if (typeof hook === 'function') {
-                            data = hook(data);
-                        }
-                        cur.callback(err, data);
-						runQueueNow();
-                    }, true);
-                };
-            dbg(('ftp.Queue::' + command + '> Opening data port').cyan);
-            ftp.setType(cur.filepath, function () {
-				console.log('type set');
-                ftp.openDataPort(portHandler, Queue.RunNext);
-            }, cur.runLevel);
-            //ftp.once('dataPortClosed', runQueueNow);
-            ftp.once('transferError', disable);
-        },
-        runQueueNow = function () {
-            dbg('running queue now');
-			try {
-				ftp.removeListener('transferError', disable);
-			} catch (eListenerUndefined) {
-			}
-            runQueue(true);
-        },
-        disable = function () {
-            running = false;
-            dbg(queue);
-            runQueue();
-        };
+				cur.callback(err, data);
+				runQueueNow();
+			}, true);
+		};
+	dbg(('ftp.Queue::' + command + '> Opening data port').cyan);
+	ftp.setType(cur.filepath, function () {
+		console.log('type set');
+		ftp.openDataPort(portHandler, Queue.RunNext);
+	}, cur.runLevel);
+	//ftp.once('dataPortClosed', runQueueNow);
+	ftp.once('transferError', disable);
+	*/
 
-    /** 
-     * The queue manager returned when creating a new {@link Queue} object
-     * @memberof Queue
-     * @inner
-     * @param {string} filepath - The location of the remote file to process the set command.
-     * @param {function} callback - The callback function to be issued.
-     * @param {boolean} runLevel - execution priority; @see {@link FTP.Queue.RunLevels}. Careful, concurrent connections
-     * will likely end in a socket error. This is meant for fine grained control over certain
-     * scenarios wherein the process is part of a running queue and you need to perform an ftp
-     * action prior to the {@link FTP#endproc} event firing and execing the next queue.
-     */
-    queueManager = function (filepath, callback, runLevel, holdQueue) {
-		qcount += 1;
-        id = 'q' + qcount;
-        console.log('Creating Queue > ' + id + ' > ' + command + ' ' + filepath);
-        queue[id] = {
-            id: id,
-            callback: callback,
-            filepath: filepath,
-            runLevel: runLevel,
-            holdQueue: holdQueue
-        };
-        queueIndex.push(id);
-        console.log('Queue is ' + (running ? 'running' : 'empty...loading'));
-        if (!running) {
-            runQueue();
-        }
-    };
-
-	queueManager.raw = command;
-
-    return queueManager;
 };//}}}
+
+
+
+/** 
+ * The queue manager returned when creating a new {@link Queue} object
+ * @memberof Queue
+ * @inner
+ * @param {string} filepath - The location of the remote file to process the set command.
+ * @param {function} callback - The callback function to be issued.
+ * @param {boolean} runLevel - execution priority; @see {@link FTP.Queue.RunLevels}. Careful, concurrent connections
+ * will likely end in a socket error. This is meant for fine grained control over certain
+ * scenarios wherein the process is part of a running queue and you need to perform an ftp
+ * action prior to the {@link FTP#endproc} event firing and execing the next queue.
+ */
+Queue.prototype.builder = function (filepath, callback, runLevel, holdQueue) {
+	
+};
+
 
 
 /**
