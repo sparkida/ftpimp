@@ -7,7 +7,7 @@ var assert = require('assert'),
 	fs = require('fs'),
 	FTP = require('../'),
 	Queue = FTP.prototype.Queue,
-	config = require('../config'),
+	config = require('../config'), // jshint ignore:line
 	path = require('path'),
 	ftp;
 config.debug = false;
@@ -43,7 +43,7 @@ describe('FTPimp', function () {
 				quit: 'QUIT'
 			};
 		Object.keys(com).forEach(function (key) {
-			it('FTP.prototyp.' + key + ' has raw ' + com[key], function () {
+			it('FTP.prototype.' + key + ' has raw ' + com[key], function () {
 				assert.equal(FTP.prototype[key].raw, com[key]);
 			});
 		});
@@ -138,7 +138,7 @@ describe('FTPimp', function () {
 	});
 	
 	describe('put: transfers files to remote', function () {
-		it ('succeeds', function (done) {
+		it('succeeds', function (done) {
 			ftp.put(['./test/index.js', 'index.js'], function (err, res) {
 				assert.equal(res, 'index.js');
 				ftp.put(['./test/test.png', 'test.png'], function (err, res) {
@@ -248,8 +248,9 @@ describe('FTPimp', function () {
 		});
 		it ('fails', function (done) {
 			ftp.ls('somebadlookup', function (err, res) {
-				assert(err instanceof Error);
-				assert.equal(res, false);
+				assert(!err);
+				assert(Array.isArray(res), 'expected array result');
+				assert.equal(res.length, 0);
 				done();
 			});
 		});
@@ -264,8 +265,9 @@ describe('FTPimp', function () {
 		});
 		it ('fails', function (done) {
 			ftp.lsnames('somebadlookup', function (err, res) {
-				assert(err instanceof Error);
-				assert.equal(res, false);
+				assert(!err);
+				assert(Array.isArray(res), 'expected array result');
+				assert.equal(res.length, 0);
 				done();
 			});
 		});
@@ -296,8 +298,10 @@ describe('FTPimp', function () {
 		});
 	});
 
-	describe.only('rmdir#RMD: recursively remove remote directory', function () {
-		/*it ('should recursively remove the directory ' + testDir, function (done) {
+	describe('rmdir#RMD: recursively remove remote directory', function () {
+		/*
+		this.timeout(3000);
+		it ('should recursively remove the directory ' + testDir, function (done) {
 			ftp.mkdir(path.join(testDir, 'foo'), function(){}, true);
 			ftp.rmdir(testDir, function (err, res) {
 				assert(!err, err);
@@ -323,83 +327,39 @@ describe('FTPimp', function () {
 		});
 		it ('should recursively remove the directory in queue order: ' + testDir, function (done) {
 			ftp.mkdir(path.join(testDir, 'foo'), function(){
-				ftp.put(['./test/test.png', path.join(testDir, 'test.png')], function(){
-				}, Queue.RunNext);
+				ftp.put(['./test/test.png', path.join(testDir, 'test.png')], function(){}, Queue.RunNext);
 			}, true);
 			ftp.rmdir(testDir, function (err, res) {
 				assert(!err, err);
 				assert.equal(res.length, 3);
 				done();
 			}, true);
-		});*/
-		it ('should recursively remove the directory ' + testDir, function (done) {
-			this.timeout(10000);
-			/*
+		});
+		*/
+		it.only ('should recursively remove the directory ' + testDir, function (done) {
+			ftp.debug.enable();
 			ftp.mkdir(path.join(testDir, 'foo'), function(){
-				var gcount = 0;
-				ftp.put(['./test/test.png', path.join(testDir, 'foo', 'test.png')], function(){
-					gcount++;
-					console.log();
-					console.log();
-					console.log();
-					console.log();
-					console.log('11running RMD now!!');
-					console.log('11running RMD now!!');
-					console.log('11running RMD now!!');
-					console.log('11running RMD now!!');
-					console.log();
-					console.log();
-					console.log()
-					console.log();
-					console.log(gcount);
-				
-				}, Queue.RunNext);
-				ftp.put(['./test/test.png', path.join(testDir, 'foo.png')], function(){
-					gcount++;
-					console.log(14124);
-				}, Queue.RunNext);
-				ftp.put(['./test/test.png', path.join(testDir, 'foo2.png')], function(){
-					gcount++;
-					console.log(151515125);
-				}, Queue.RunNext);
+				console.log(111);
+				ftp.put(['./test/test.png', path.join(testDir, 'foo', 'test.png')], function(){}, Queue.RunNext);
+				ftp.put(['./test/test.png', path.join(testDir, 'foo.png')], function(){}, Queue.RunNext);
+				ftp.put(['./test/test.png', path.join(testDir, 'foo2.png')], function(){}, Queue.RunNext);
 			}, true);
 
-			/*
 			ftp.rmdir(testDir, function (err, res) {
 				assert(!err, err);
 				assert.equal(res.length, 4);
 				done();
 			}, true);
-*/
-			ftp.ls(testDir + '-0', function (err, res) {
-				console.log(1);
-				console.log(err, res);
-			});
-			ftp.ls(testDir + '-1', function (err, res) {
-				console.log(2);
-				console.log(err, res);
-			});
-			ftp.ls(testDir + '-2', function (err, res) {
-				console.log(3);
-				console.log(err, res);
-			}, Queue.RunNext);
-			ftp.ls(testDir + '-3', function (err, res) {
-				console.log(4);
-				console.log(err, res);
-			});
-			/*
-			ftp.ls(testDir, function (err, res) {
-				console.log();
-				console.log(err, res);
-			});*/
 		});
-		/*it ('fails', function (done) {
+		/*
+		it ('fails', function (done) {
 			ftp.rmdir('badDirectoryError', function (err, res) {
 				assert(err instanceof Error);
 				assert(!res);
 				done();
 			}, true);
-		});*/
+		});
+		*/
 	});
 	
 	describe('General FTP commands', function () {

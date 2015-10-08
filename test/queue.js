@@ -4,11 +4,9 @@
  * @module test/index
  */
 var assert = require('assert'),
-	fs = require('fs'),
 	FTP = require('../'),
 	Queue = FTP.Queue,
-	config = require('../config'),
-	path = require('path'),
+	config = require('../config'), // jshint ignore:line
 	ftp;
 config.debug = false;
 
@@ -22,6 +20,26 @@ describe('FTPimp', function () {
 		//ftp.debug.enable();
 		ftp.connect(function () {
 			done();
+		});
+	});
+
+	describe('Queue RunLevel Sequencing', function () {
+		var order = [];
+		it('should run in the order of 1,3,2,4', function (done) {
+			ftp.ls('foo-1', function (err, res) {
+				order.push(1);
+			});
+			ftp.ls('foo-2', function (err, res) {
+				order.push(2);
+			});
+			ftp.ls('foo-3', function (err, res) {
+				order.push(3);
+			}, Queue.RunNext);
+			ftp.ls('foo-4', function (err, res) {
+				order.push(4);
+				assert.deepEqual(order, [1,3,2,4]);
+				done();
+			});
 		});
 	});
 
