@@ -298,7 +298,6 @@ FTP.prototype.init = function () {//{{{
 var ExeQueue = function (command, callback, runLevel, holdQueue) {
         var that = this,
             n,
-			now,
             method = command.split(' ', 1)[0],
             bind = function (name) {
                 that[name.slice(1)] = function () {
@@ -364,6 +363,13 @@ ExeQueue.prototype._checkProc = function () {
 };
 
 
+ExeQueue.prototype._closeTransfer = function () {
+    dbg('ExeQueue> closing transfer pipe'.magenta);
+    var exeQueue = this;
+	exeQueue.closePipe();
+	exeQueue.checkProc();
+};
+
 ExeQueue.prototype._closePipe = function () {
     dbg('ExeQueue> closing transfer pipe'.magenta);
     var exeQueue = this,
@@ -375,11 +381,7 @@ ExeQueue.prototype._closePipe = function () {
     } catch (dataNotBoundError) {
         dbg('data not bound: ', dataNotBoundError);
     }
-	console.log(data);
-	console.log(data);
-	console.log(data);
-	console.log(data);
-	dbg('ExeQueue> Ending transfer size(' + (data ? data.length : 0) + ')');
+	dbg('ExeQueue> total size(' + (data ? data.length : 0) + ')');
 	exeQueue.callback(null, data);
 };
 
@@ -407,7 +409,9 @@ ExeQueue.prototype._responseHandler = function (code, data) {
         exeQueue.callback(new Error(data), null);
         exeQueue.checkProc();
     } else if (code === 150 || code === 125) {
-        if (exeQueue.method !== 'STOR') {
+        if (exeQueue.method === 'STOR') {
+			ftp.once('dataTransferComplete', exeQueue.closeTransfer);
+		} else {
             dbg('listening for pipe data'.red);
             if (ftp.pipeClosed) {
                 dbg('pipe already closed'.yellow);
@@ -486,13 +490,8 @@ FTP.prototype.run = function (command, callback, runLevel, holdQueue) {//{{{
 
     var callbackConstruct = function () {
             dbg('Run> running callbackConstruct'.yellow + ' ' + command);
-            //if (command === 'QUIT') {
-            //}
-			console.log(command, runLevel, holdQueue);
-			console.log(command, runLevel, holdQueue);
-			console.log(command, runLevel, holdQueue);
-			console.log(command, runLevel, holdQueue);
-            //var queueInstance = 
+            //if (command === 'QUIT') {...}
+			dbg(command, runLevel, holdQueue);
             ExeQueue.create(command, callback, runLevel, holdQueue);
         };
 
@@ -532,7 +531,7 @@ FTP.prototype.queue = {//{{{
     },
     register: function (callback, runLevel) {
         dbg('Queue> Registering callback...');
-        dbg('Queue> processing: ' + ftp.queue.processing + '; size: ' + ftp.queue._queue.length);
+        dbg(('Queue> processing: ' + ftp.queue.processing + '; size: ' + ftp.queue._queue.length).cyan);
 		runLevel = runLevel === undefined ? false : runLevel;
 		if (runLevel) {
 			//run next
@@ -598,56 +597,17 @@ FTP.prototype.on('endproc', FTP.prototype.queue.run);//}}}
  * @see {@link Queue}
  * @param {string} command - The command that will be issued ie: <b>"CWD foo"</b>
  * @returns {function} queueManager - The simple queue manager
- * @TODO - make OO - double check endproc and then callback ? or callback and endproc
- * @example
- * //the current implementation of FTP.rename is preferred,
- * //this is merely being used as an example
- * var myCustomRename = (function () {
- *     var myQueueManager = ftp.Queue.create('RNFR');
- *     return function (pathArray, callback) {
- *         var from = pathArray[0],
- *             to = pathArray[1];
- *         //override the callback, Queue's expect the
- *         //first parameter to be a string
- *         myQueueManager(from, function (err, data) {
- *             if (err) {
- *                 dbg(err);
- *             } else {
- *                 //provide custom function and trigger callback when done
- *                 ftp.raw('RNTO ' + to, callback);
- *             }
- *         });
- *     }
- * }());
+ * @TODO - documentation needs to be updated rewrite
  */
 var Queue = function (command) {//{{{
+	
 	var queue = this;
 	queue.command = command;
-	
-	return queue.builder;
 
-	/*
-	var portHandler = function () {
-			hook = undefined === that[command + 'Hook'] ? null : that[command + 'Hook'];
-			dbg('hook: ' + typeof hook);
-			//hook data into custom instance function
-			ftp.runNow(command + ' ' + cur.filepath, function (err, data) {
-				if (typeof hook === 'function') {
-					data = hook(data);
-				}
-				cur.callback(err, data);
-				runQueueNow();
-			}, true);
-		};
-	dbg(('ftp.Queue::' + command + '> Opening data port').cyan);
-	ftp.setType(cur.filepath, function () {
-		console.log('type set');
-		ftp.openDataPort(portHandler, Queue.RunNext);
-	}, cur.runLevel);
-	//ftp.once('dataPortClosed', runQueueNow);
-	ftp.once('transferError', disable);
-	*/
+	var builder = queue.builder();
+	builder.raw = command;
 
+	return builder;
 };//}}}
 
 
@@ -663,8 +623,33 @@ var Queue = function (command) {//{{{
  * scenarios wherein the process is part of a running queue and you need to perform an ftp
  * action prior to the {@link FTP#endproc} event firing and execing the next queue.
  */
-Queue.prototype.builder = function (filepath, callback, runLevel, holdQueue) {
-	
+Queue.prototype.builder = function () {
+	var queue = this,
+		command = queue.command;
+	return function (filepath, callback, runLevel, holdQueue) {
+		var hook = (undefined === queue[command + 'Hook']) ? null : queue[command + 'Hook'],
+			portHandler = function () {
+				dbg('Queue.builder: checking hook -> ' + typeof hook);
+				//hook data into custom instance function
+				ftp.runNow(command + ' ' + filepath, function (err, data) {
+					if (typeof hook === 'function') {
+						data = hook(data);
+					}
+					callback(err, data);
+					if (!holdQueue) {
+						ftp.emit('endproc');
+					}
+				}, true);
+			};
+		dbg(['Queue.builder::', command, filepath, '> setting '].join(' ').cyan);
+		dbg(runLevel, holdQueue);
+		//TODO add list of commands that don't need to change type, or should be a certain type
+		//ie ls:LIST
+		ftp.setType(filepath, function () {
+			dbg('type set');
+			ftp.openDataPort(portHandler, Queue.RunNow, true);
+		}, runLevel, true);
+	};
 };
 
 
@@ -931,10 +916,7 @@ FTP.prototype.connect = function (callback) {//{{{
  */
 FTP.prototype.openDataPort = function (callback, runLevel, holdQueue) {//{{{
 	holdQueue = !!holdQueue;
-	console.log('holdQ: ', holdQueue);
-	console.log('holdQ: ', holdQueue);
-	console.log('holdQ: ', holdQueue);
-	console.log('holdQ: ', holdQueue);
+	dbg('holdQ: ', holdQueue);
     var dataHandler = function (err, data) {
             if (err) {
                 dbg('error opening data port with PASV');
@@ -984,6 +966,7 @@ FTP.prototype.openDataPort = function (callback, runLevel, holdQueue) {//{{{
  * you can supply a string as a shortcut. Otherwise, use an array [from, to]
  * @param {function} callback - The callback function to be issued once the file
  * has been successfully written to the remote
+ * @TODO - rewrite needed, can be simplified at this point
  */
 FTP.prototype.put = (function () {//{{{
     var running = false,
@@ -1005,14 +988,7 @@ FTP.prototype.put = (function () {//{{{
                     return true;
                 }
                 return false;
-            },
-			transferComplete = function () {
-				dbg('data transfer complete');
-				if (!curQueue.holdQueue) {
-					ftp.emit('endproc');
-				}
-				running = false;
-			};
+            };
 
         if (running) {
             dbg('Put> already running'.yellow);
@@ -1051,19 +1027,9 @@ FTP.prototype.put = (function () {//{{{
                     return;
                 }
                 dbg('---data piped--- running STOR');
-                ftp.once('dataTransferComplete', transferComplete);
 
                 //send command through command socket to stor file immediately
-                ftp.runNow('STOR ' + remotePath, function () {
-					console.log('STOR complete');
-					console.log('STOR complete');
-					console.log('STOR complete');
-					console.log('STOR complete');
-					console.log('STOR complete');
-					console.log('STOR complete');
-					console.log('STOR complete');
-					console.log('STOR complete');
-					console.log(curQueue);
+                ftp.runNow('STOR ' + remotePath, function (err, data) {
 					if (curQueue.err) {
 						dbg('STOR: error occured');
 						callback(curQueue.err, null);
@@ -1071,16 +1037,8 @@ FTP.prototype.put = (function () {//{{{
 						dbg('STOR: file saved ' + remotePath);
 						callback(null, remotePath);
 					}
-						console.log('done');
-						console.log('done');
-						console.log('done');
-						console.log('done');
                 });
-                //ftp.emit('endproc');
-                //runQueue();
-
             };
-            //TODO --- set current type
             //write file data to remote data socket
 			ftp.pipe.end(filedata, onEnd);
         };
@@ -1088,9 +1046,8 @@ FTP.prototype.put = (function () {//{{{
         ftp.once('pipeAborted', checkAborted);
 		ftp.once('transferError', function (err) {
 			curQueue.err = err;
-			ftp.removeListener('dataTransferComplete', transferComplete);
+			ftp.removeListener('pipeAborted', checkAborted);
 		});
-
         ftp.setType(curQueue.path, function () {
             ftp.openDataPort(dataTransfer, Queue.RunNow, true);
         }, Queue.RunNow, true);
@@ -1121,7 +1078,7 @@ FTP.prototype.put = (function () {//{{{
         //into the pipeFile callback
         dbg('>queueing file for put process: "' + localPath + '" to "' + remotePath + '"');
         pipeFile = function (err, filedata) {
-            console.log(('>piping file: ' + localPath).green);
+            dbg(('>piping file: ' + localPath).green);
             if (err) {
                 dbg('>file read error', err);
                 queue = {
@@ -1233,10 +1190,6 @@ FTP.prototype.mkdir = function (dirpath, callback, recursive, runLevel, holdQueu
         isRoot = (dirpath.charAt(0) === path.sep);
         paths = dirpath.split(path.sep).filter(Boolean);
         pathsLength = paths.length;
-		console.log(pathsLength);
-		console.log(pathsLength);
-		console.log(pathsLength);
-		console.log(pathsLength);
         cur = '';
         created = [];
         i = 0;
@@ -1300,22 +1253,20 @@ FTP.prototype.rmdir = function (dirpath, callback, recursive, runLevel, holdQueu
 					var cmd = item.isDirectory ? ftp.rmdir.raw : ftp.unlink.raw,
 						handleDeleteResponse = function (err) {
 							if (err) {
-								console.log('scanning directory: '.cyan, item.filename);
+								dbg('scanning directory: '.cyan, item.filename);
 								checkDir(err, item.filename);
 							} else {
 								pending -= 1;
-								console.log('file unlinked: '.yellow, item.filename);
+								dbg('file unlinked: '.yellow, item.filename);
 								deleted.push(item.filename);
 							}
-							console.log('pending2: ', pending);
+							dbg('pending2: ', pending);
 							if (pending === 0) {
 								ftp.runNext(ftp.rmdir.raw + ' ' + dirpath, function (err, res) {
 									if (deleted.indexOf(dirpath) === -1) {
 										deleted.push(dirpath);
 									}
-									console.log('last file removed @' + dirpath);
-									console.log('last file removed');
-									console.log('last file removed');
+									dbg('last file removed @' + dirpath);
 									callback(err, deleted);
 								}, holdQueue);
 							}
@@ -1325,41 +1276,21 @@ FTP.prototype.rmdir = function (dirpath, callback, recursive, runLevel, holdQueu
 				};
 
 			if (err) {
-				console.log(12451251251);
-				console.log(12451251251);
-				console.log(12451251251);
-				console.log(12451251251);
-				console.log(12451251251);
-				console.log(12451251251);
-				console.log(12451251251);
-				console.log(err);
+				dbg('file list'.red, err);
 				callback(err, data);
 			} else {
-				console.log(888888888888888888888);
-				console.log(888888888888888888888);
-				console.log(888888888888888888888);
-				console.log(888888888888888888888);
 				data = data.filter(noDots);
-				console.log('file list', pending, err, data);
+				dbg('file list'.green, pending, err, data);
 				pending += data.length;
 				data.forEach(bindUnlinkHandler);
 			}
-			console.log('pending1: ', pending);
+			dbg('pending1: ', pending);
 		},
 		checkDir = function (err, data) {
-			console.log();
-			console.log();
-			console.log();
-			console.log('checking dir:');
-			console.log(err, data);
-			console.log();
-			console.log();
-			console.log();
-
+			dbg('checking dir:');
+			dbg(err, data);
 			if (!recursive) {
-				console.log('ending !recursive'.red);
-				console.log('ending !recursive'.red);
-				console.log('ending !recursive'.red);
+				dbg('ending !recursive'.red);
 				return callback(err, deleted);
 			}
 			if (!err) {
@@ -1368,15 +1299,11 @@ FTP.prototype.rmdir = function (dirpath, callback, recursive, runLevel, holdQueu
 				deleted.push(dirpath);
 				callback(err, deleted);
 			} else if (null === data) {
-				console.log('need to ls directory', dirpath);
-				console.log('need to ls directory', dirpath);
-				console.log('need to ls directory', dirpath, holdQueue);
+				dbg('need to ls directory', dirpath, holdQueue);
 				//open the queue immediately after this callback
 				ftp.ls(dirpath, handleFileList, Queue.RunNext, holdQueue);
 			} else {
-				console.log('ls subdirectory', data);
-				console.log('ls subdirectory', data);
-				console.log('ls subdirectory', data);
+				dbg('ls subdirectory', data);
 				ftp.ls(data, handleFileList, Queue.RunNext, holdQueue);
 			}
 		};
@@ -1747,7 +1674,7 @@ FTP.prototype.filemtime.raw = 'MDTM';
 
 Queue.registerHook('NLST', function (data) {//{{{
     if (null === data) {
-        return false;
+        return [];
     }
     var filter = function (elem) {
             return elem.length > 0 && elem !== '.' && elem !== '..';
@@ -1766,7 +1693,7 @@ FTP.prototype.lsnames = Queue.create('NLST');
 
 
 /**
- * Runs the FTP command SIZE - Name list of remote directory.
+ * Runs the FTP command SIZE - Get size of remote file
  * @function
  * @param {string} filepath - The location of the file to retrieve size from.
  * @param {function} callback - The callback function to be issued.
@@ -1944,14 +1871,20 @@ FTP.prototype.type.raw = 'TYPE';
  * @param {boolean} [holdQueue=false] - Prevents the queue from firing an endproc event, user must end manually
  */
 FTP.prototype.setType = function (filepath, callback, runLevel, holdQueue) {
-    var ext;
+    var ext,
+		hijack = function () {
+			callback();
+			if (!holdQueue) {
+				ftp.emit('endproc');
+			}
+		};
     if (filepath.indexOf('.') > -1) {
 		//dot files eg .htaccess 
         if (filepath.indexOf('.') === 0) {
             if (ftp.currentType !== 'ascii') {
                 ftp.type('ascii', callback, runLevel, holdQueue);
             } else {
-                callback();
+                ftp.queue.register(hijack, runLevel);
             }
         } else {
             ext = filepath.split('.').pop();
@@ -1959,18 +1892,18 @@ FTP.prototype.setType = function (filepath, callback, runLevel, holdQueue) {
                 if (ftp.currentType !== 'ascii') {
                     ftp.type('ascii', callback, runLevel, holdQueue);
                 } else {
-                    callback();
+					ftp.queue.register(hijack, runLevel);
                 }
             } else if (ftp.currentType === 'ascii') {
                 ftp.type('binary', callback, runLevel, holdQueue);
             } else {
-                callback();
+				ftp.queue.register(hijack, runLevel);
             }
         }
     } else if (ftp.currentType !== 'ascii') {
         ftp.type('ascii', callback, runLevel, holdQueue);
     } else {
-        callback();
+		ftp.queue.register(hijack, runLevel);
     }
 };
 
