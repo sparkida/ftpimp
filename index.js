@@ -530,8 +530,8 @@ FTP.prototype.queue = {//{{{
         ftp.queue._queue = [];
     },
     register: function (callback, runLevel) {
-        console.log('Queue> Registering callback...');
-        console.log(('Queue> processing: ' + ftp.queue.processing + '; size: ' + ftp.queue._queue.length).cyan);
+        dbg('Queue> Registering callback...');
+        dbg(('Queue> processing: ' + ftp.queue.processing + '; size: ' + ftp.queue._queue.length).cyan);
 		runLevel = runLevel === undefined ? false : runLevel;
 		if (runLevel) {
 			//run next
@@ -552,10 +552,10 @@ FTP.prototype.queue = {//{{{
         }
     },
     run: function () {
-        console.log('Queue> Loading queue'.yellow);
+        dbg('Queue> Loading queue'.yellow);
         if (ftp.queue._queue.length > 0) {
             ftp.queue.processing = true;
-            console.log('Queue> Loaded...running');
+            dbg('Queue> Loaded...running');
             ftp.queue.currentProc = ftp.queue._queue.shift();
             if (!ftp.error) {
                 ftp.queue.currentProc.call(ftp.queue.currentProc);
@@ -567,7 +567,7 @@ FTP.prototype.queue = {//{{{
              */
             ftp.emit('queueEmpty');
             ftp.queue.processing = false;
-            console.log('--queue empty--'.yellow);
+            dbg('--queue empty--'.yellow);
         }
     }
 };
@@ -899,7 +899,6 @@ FTP.prototype.connect = function (callback) {//{{{
 	dbg('connected: ' + ftp.config.host + ':' + ftp.config.port);
     ftp.socket.on('close', function () {
         dbg('**********socket CLOSED**************');
-        process.exit(0);
     });
     ftp.socket.on('end', function () {
         dbg('**********socket END**************');
@@ -1037,12 +1036,7 @@ FTP.prototype.put = (function () {//{{{
 						dbg('STOR: file saved ' + remotePath);
 						callback(null, remotePath);
 					}
-					console.log();
-					console.log();
-					console.log();
-					console.log();
-					console.log();
-					console.log('file put successful');
+					dbg('file put successful');
 					if (!curQueue.holdQueue) {
 						ftp.emit('endproc');
 					}
@@ -1114,7 +1108,6 @@ FTP.prototype.put = (function () {//{{{
         ftp.queue.register(function () {
             fs.readFile(localPath, pipeFile);
         }, runLevel);
-		console.log(ftp.queue._queue);
     };
 }());//}}}
 
@@ -1254,104 +1247,112 @@ FTP.prototype.mkdir.raw = 'MKD';
 FTP.prototype.rmdir = function (dirpath, callback, recursive, runLevel, holdQueue) {//{{{
 	recursive = !!recursive;
 	var deleted = [],
-		pending = [],
-		pendingDirs = [],
-		dirStatObject = function (dir) {
-			var stat = new StatObject.Dummy(dir);
-			stat.isDirectory = true;
-			return stat;
+		pending = {},
+		depth = [],
+		currentPending = '',
+		currentDepthPath = '',
+		filterPaths = function (statObject) {
+			return statObject.filename !== '.' && statObject.filename !== '..';
 		},
-		noDots = function (statObj) {
-			return statObj.filename !== '.' && statObj.filename !== '..';
+		checkProc = function () {
+			if (!holdQueue) {
+				ftp.emit('endproc');
+			}
+		},
+		removeDir = function () {
+			dbg('removing directory: '.magenta, currentDepthPath);
+			ftp.runNow(ftp.rmdir.raw + ' ' + currentDepthPath, function (err, res) {
+				dbg('Directory deleted: '.green, currentDepthPath);
+				if (err) {
+					throw new Error('could not delete dir @' + currentDepthPath);
+				} else {
+					//stack deleted and remove from queues
+					deleted.push(currentDepthPath);
+					depth.pop();
+					delete pending[currentPending];
+					//continue deleting as necessary
+					if (depth.length > 0) {
+						//update depth to last item in depth array
+						currentPending = depth[depth.length - 1];
+						currentDepthPath = depth.join(path.sep);
+						unlinkPending();
+					} else {
+						callback(err, deleted);
+						checkProc();
+					}
+				}
+			});
 		},
 		bindUnlinkHandler = function (item) {
-			console.log(55123235, item,15125125);
 			var cmd = item.isDirectory ? ftp.rmdir.raw : ftp.unlink.raw,
 				filepath,
 				handleDeleteResponse = function (err) {
 					if (err) {
-						console.log('scanning directory: '.cyan, item.filename);
+						dbg('scanning directory: '.cyan, item.filename);
 						//restack item
 						checkDir(err, item.filename);
 						return;
 					} else {
-						console.log('file unlinked: '.yellow, item.filename);
-						deleted.push(item.filename);
-					}
-					console.log('pending2: ', pending.length);
-					if (pending.length > 0) {
-						console.log('continuing remove file');
-						unlink();
-					} else {
-						console.log('last file removed @' + filepath);
-						if (pendingDirs.length > 0) {
-							console.log(1);
-							unlinkDir();
+						dbg('file unlinked: '.yellow, item.filename);
+						deleted.push(filepath);
+						//continue deleting as necessary
+						if (pending[currentPending].length > 0) {
+							unlinkPending();
 						} else {
-							console.log('removing last dir', dirpath);
-							console.log(ftp.rmdir.raw + ' ' + dirpath);
-							ftp.runNow(ftp.rmdir.raw + ' ' + dirpath, function (err, data) {
-								deleted.push(dirpath);
-								console.log('main directory removed @dirpath');
-								callback(err, deleted);
-								if (!holdQueue) {
-									ftp.emit('endproc');
-								}
-							}, true);
+							//remove the directory if it is empty
+							removeDir();
 						}
 					}
 				};
 
-			filepath = path.join(dirpath, item.filename);
-			console.log('rmdir: removing "' + filepath + '"');
+			filepath = path.join(currentDepthPath, item.filename);
+			dbg('rmdir: removing "' + filepath + '"');
 			ftp.runNow(cmd + ' ' + filepath, handleDeleteResponse, true);
 		},
-		unlinkDir = function () {
-			console.log('unlinking dir object');
-			bindUnlinkHandler(pendingDirs.pop());
-		},
-		unlink = function () {
-			console.log('unlinking file object');
-			bindUnlinkHandler(pending.shift());
-		},
-		unique = function (item, pos, arr) {
-			return arr.indexOf(item) == pos;
+		unlinkPending = function () {
+			dbg('unlinking file object');
+			if (pending[currentPending].length > 0) {
+				bindUnlinkHandler(pending[currentPending].pop());
+			} else {
+				removeDir();
+			}
 		},
 		handleFileList = function (err, data) {
-			console.log('pending0: ', pending.length);
+			dbg('rmdir: handleFileList...'.magenta, err, data.length - 2);
 			if (err) {
-				console.log('file list'.red, err);
 				callback(err, data);
 			} else {
-				data = data.filter(noDots);
-				console.log('file list'.green, pending, err, data);
-				pending = data.concat(pending).filter(unique);
-				console.log('pending1: ', pending.length);
-				unlink();
+				if (data.length === 0) {
+					callback(new Error('Directory does not exist'), null);
+					return checkProc();
+				}
+				pending[currentPending] = data.filter(filterPaths);
+				unlinkPending();
 			}
 		},
 		checkDir = function (err, data) {
-			console.log('checking dir:'.cyan);
-			console.log('checking dir:');
-			console.log(err, data);
+			dbg('checking dir:'.cyan, err, data);
 			if (!recursive) {
-				console.log('ending !recursive'.red);
+				dbg('ending !recursive'.red);
 				return callback(err, deleted);
 			}
 			if (!err) {
 				pending -= 1;
-				console.log('rmdir> directory deleted'.yellow, dirpath);
+				dbg('rmdir> directory deleted'.yellow, dirpath);
 				deleted.push(dirpath);
 				callback(err, deleted);
+				checkProc();
 			} else {
-				//add file to list of items needed to be removed
-				if (data) {
-					pendingDirs.push(dirStatObject(data));
-				}
 				data = data ? data : dirpath;
-				console.log('need to ls directory', data);
+				dbg('need to ls directory', data);
+				//add file to list of items needed to be removed, increases depth
+				depth.push(data);
+				//create new array of pending items for directory
+				pending[data] = [];
 				//open the queue immediately after this callback
-				ftp.ls(data, handleFileList, Queue.RunNow, true);
+				currentPending = data;
+				currentDepthPath = depth.join(path.sep);
+				ftp.ls(currentDepthPath, handleFileList, Queue.RunNow, true);
 			}
 		};
     ftp.run(ftp.rmdir.raw + ' ' + dirpath, checkDir, runLevel, true);

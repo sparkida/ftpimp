@@ -153,7 +153,7 @@ queued in order, and then processed one after the other.
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="index.js.html">index.js</a>, <a href="index.js.html#line629">line 629</a>
+        <a href="index.js.html">index.js</a>, <a href="index.js.html#line602">line 602</a>
     </li></ul></dd>
     
 
@@ -172,7 +172,7 @@ queued in order, and then processed one after the other.
     <dt class="tag-todo">To Do:</dt>
     <dd class="tag-todo">
         <ul>
-            <li>- make OO - double check endproc and then callback ? or callback and endproc</li>
+            <li>- documentation needs to be updated rewrite</li>
         </ul>
     </dd>
     
@@ -212,29 +212,6 @@ queued in order, and then processed one after the other.
 </dl>
 
     
-
-
-    <h5>Example</h5>
-    
-    <pre class="prettyprint"><code>//the current implementation of FTP.rename is preferred,
-//this is merely being used as an example
-var myCustomRename = (function () {
-    var myQueueManager = ftp.Queue.create('RNFR');
-    return function (pathArray, callback) {
-        var from = pathArray[0],
-            to = pathArray[1];
-        //override the callback, Queue's expect the
-        //first parameter to be a string
-        myQueueManager(from, function (err, data) {
-            if (err) {
-                dbg(err);
-            } else {
-                //provide custom function and trigger callback when done
-                ftp.raw('RNTO ' + to, callback);
-            }
-        });
-    }
-}());</code></pre>
 
 
 
@@ -348,7 +325,7 @@ var myCustomRename = (function () {
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="index.js.html">index.js</a>, <a href="index.js.html#line799">line 799</a>
+        <a href="index.js.html">index.js</a>, <a href="index.js.html#line732">line 732</a>
     </li></ul></dd>
     
 
@@ -537,7 +514,7 @@ var myCustomRename = (function () {
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="index.js.html">index.js</a>, <a href="index.js.html#line767">line 767</a>
+        <a href="index.js.html">index.js</a>, <a href="index.js.html#line700">line 700</a>
     </li></ul></dd>
     
 
@@ -684,7 +661,7 @@ ftp.put('foo', function () { //runs second
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="index.js.html">index.js</a>, <a href="index.js.html#line783">line 783</a>
+        <a href="index.js.html">index.js</a>, <a href="index.js.html#line716">line 716</a>
     </li></ul></dd>
     
 
@@ -803,7 +780,7 @@ ftp.put('foo', function () { //runs second
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="index.js.html">index.js</a>, <a href="index.js.html#line791">line 791</a>
+        <a href="index.js.html">index.js</a>, <a href="index.js.html#line724">line 724</a>
     </li></ul></dd>
     
 
@@ -939,7 +916,7 @@ ftp.put('foo', function () { //runs second
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="index.js.html">index.js</a>, <a href="index.js.html#line805">line 805</a>
+        <a href="index.js.html">index.js</a>, <a href="index.js.html#line738">line 738</a>
     </li></ul></dd>
     
 
@@ -1094,7 +1071,7 @@ on the command (parameter 1)
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="index.js.html">index.js</a>, <a href="index.js.html#line816">line 816</a>
+        <a href="index.js.html">index.js</a>, <a href="index.js.html#line748">line 748</a>
     </li></ul></dd>
     
 
@@ -1136,13 +1113,13 @@ on the command (parameter 1)
 </div>
 
 <nav>
-    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-lib_command.html">lib/command</a></li></ul><h3>Classes</h3><ul><li><a href="CMD.html">CMD</a></li><li><a href="FTP.html">FTP</a></li><li><a href="FTP.Queue.html">Queue</a></li><li><a href="FTP.StatObject.html">StatObject</a></li><li><a href="FTP_Handle.html">Handle</a></li><li><a href="FTP_SimpleQueue.html">SimpleQueue</a></li></ul><h3>Events</h3><ul><li><a href="FTP.html#event:fileTransferComplete">fileTransferComplete</a></li><li><a href="FTP.html#event:queueEmpty">queueEmpty</a></li><li><a href="FTP.html#socket#event:error">error</a></li><li><a href="FTP.html#socket#event:ready">ready</a></li></ul><h3>Namespaces</h3><ul><li><a href="FTP.debug.html">debug</a></li></ul><h3>Mixins</h3><ul><li><a href="EventEmitter.html">EventEmitter</a></li></ul>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-lib_command.html">lib/command</a></li></ul><h3>Classes</h3><ul><li><a href="CMD.html">CMD</a></li><li><a href="FTP.html">FTP</a></li><li><a href="FTP.Queue.html">Queue</a></li><li><a href="FTP.StatObject.html">StatObject</a></li><li><a href="FTP.StatObject.Dummy.html">StatObject.Dummy</a></li><li><a href="FTP_Handle.html">Handle</a></li><li><a href="FTP_SimpleQueue.html">SimpleQueue</a></li></ul><h3>Events</h3><ul><li><a href="FTP.html#event:fileTransferComplete">fileTransferComplete</a></li><li><a href="FTP.html#event:queueEmpty">queueEmpty</a></li><li><a href="FTP.html#socket#event:error">error</a></li><li><a href="FTP.html#socket#event:ready">ready</a></li></ul><h3>Namespaces</h3><ul><li><a href="FTP.debug.html">debug</a></li></ul><h3>Mixins</h3><ul><li><a href="EventEmitter.html">EventEmitter</a></li></ul>
 </nav>
 
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.3.0-beta3</a> on Sat Sep 19 2015 03:55:59 GMT-0700 (PDT)
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.3.3</a> on Fri Oct 09 2015 12:58:25 GMT-0700 (PDT)
 </footer>
 
 <script> prettyPrint(); </script>

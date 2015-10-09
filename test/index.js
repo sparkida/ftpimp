@@ -277,7 +277,10 @@ describe('FTPimp', function () {
 		it ('succeeds', function (done) {
 			ftp.unlink('ind.js', function (err, res) {
 				assert.equal(res, 'ind.js');
-				done(err);
+				ftp.unlink('test.png', function (err, res) {
+					assert.equal(res, 'test.png');
+					done(err);
+				});
 			});
 		});
 		it ('fails', function (done) {
@@ -299,9 +302,7 @@ describe('FTPimp', function () {
 	});
 
 	describe('rmdir#RMD: recursively remove remote directory', function () {
-		this.timeout(4000);
-		/*
-		this.timeout(3000);
+		this.timeout(10000);
 		it ('should recursively remove the directory ' + testDir, function (done) {
 			ftp.mkdir(path.join(testDir, 'foo'), function(){}, true);
 			ftp.rmdir(testDir, function (err, res) {
@@ -336,7 +337,7 @@ describe('FTPimp', function () {
 				done();
 			}, true);
 		});
-		it.only ('should recursively remove files in the directory ' + testDir, function (done) {
+		it ('should recursively remove files in the directory ' + testDir, function (done) {
 			ftp.mkdir(path.join(testDir, 'foo'), function(){
 				ftp.put(['./test/test.png', path.join(testDir, 'foo.png')], function(){}, Queue.RunNext);
 				ftp.put(['./test/test.png', path.join(testDir, 'foo1.png')], function(){}, Queue.RunNext);
@@ -345,12 +346,21 @@ describe('FTPimp', function () {
 			
 			ftp.rmdir(testDir, function (err, res) {
 				assert(!err, err);
+				assert.equal(res.length, 5);
+				done();
+			}, true);
+		});
+		it ('should recursively remove all empty directories', function (done) {
+			ftp.mkdir(path.join(testDir, 'foo', 'bar', 'who'), function(){
+			}, true);
+			
+			ftp.rmdir(testDir, function (err, res) {
+				assert(!err, err);
 				assert.equal(res.length, 4);
 				done();
 			}, true);
 		});
-		*/
-		it.only ('should recursively remove files in the directory ' + testDir, function (done) {
+		it ('should recursively remove files in the directory ' + testDir, function (done) {
 			ftp.mkdir(path.join(testDir, 'foo'), function(){
 				ftp.put(['./test/test.png', path.join(testDir, 'foo', 'foo.png')], function(){}, Queue.RunNext);
 				ftp.put(['./test/test.png', path.join(testDir, 'foo', 'foo1.png')], function(){}, Queue.RunNext);
@@ -360,11 +370,10 @@ describe('FTPimp', function () {
 			
 			ftp.rmdir(testDir, function (err, res) {
 				assert(!err, err);
-				assert.equal(res.length, 4);
+				assert.equal(res.length, 6);
 				done();
 			}, true);
 		});
-		/*
 		it ('fails', function (done) {
 			ftp.rmdir('badDirectoryError', function (err, res) {
 				assert(err instanceof Error);
@@ -372,7 +381,6 @@ describe('FTPimp', function () {
 				done();
 			}, true);
 		});
-		*/
 	});
 	
 	describe('General FTP commands', function () {
@@ -399,12 +407,80 @@ describe('FTPimp', function () {
 		});
 	});
 
-	describe('it closes connection to remote', function () {
-		it ('quit#QUIT: terminates connection to remote', function (done) {
-			ftp.quit(function (err, res) {
-				assert(typeof res === 'string');
-				done(err);
+	describe('Queue RunLevel Sequencing', function () {
+		var order = [];
+		it('should run in the order of 1,3,2,4', function (done) {
+			ftp.ls('foo-1', function (err, res) {
+				order.push(1);
 			});
+			ftp.ls('foo-2', function (err, res) {
+				order.push(2);
+			});
+			ftp.ls('foo-3', function (err, res) {
+				order.push(3);
+			}, Queue.RunNext);
+			ftp.ls('foo-4', function (err, res) {
+				order.push(4);
+				assert.deepEqual(order, [1,3,2,4]);
+				done();
+			});
+		});
+	});
+
+	describe('Queue sequence tests', function () {
+		var level = 0,
+			msg = 'should be at level ';
+		it ('should run in waterfall', function (done) {
+			ftp.ping(function (err, res) {
+				level += 1;
+				//console.log(level);
+				assert(level, 1, msg + level);
+				ftp.runNow(ftp.ping.raw, function (err, res) {
+					level += 1;
+					//console.log(level);
+					assert(level, 2, msg + level);
+				});
+				ftp.ping(function (err, res) {
+					level += 1;
+					assert(level, 6, msg + level);
+				});
+				ftp.runNext(ftp.ping.raw, function (err, res) {
+					level += 1;
+					//console.log(level);
+					assert(level, 3, msg + level);
+				});
+			});
+			ftp.ping(function (err, res) {
+				level += 1;
+				//console.log(level);
+				assert.equal(level, 4, msg + level);
+				ftp.ping(function (err, res)  {
+					level += 1;
+					//console.log(level);
+					assert.equal(level, 7, msg + level);
+					done();
+				});
+			});
+			ftp.ping(function (err, res) {
+				level += 1;
+				//console.log(level);
+				assert.equal(level, 5, msg + level);
+			});
+		});
+		it ('should never run the last command', function (done) {
+			ftp.ping(function (err, res) {
+				level = 1;
+				assert(level, 1, msg + level);
+				setTimeout(function () {
+					done();
+				}, 250);
+			}, Queue.RunLast, true);
+			ftp.ping(function (err, res) {
+				done('This should not run!');
+			});
+		});
+		it ('should override the holdQueue from last command and quit', function (done) {
+			ftp.quit(done, Queue.RunNow);
 		});
 	});
 });
