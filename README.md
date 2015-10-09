@@ -1,17 +1,14 @@
-FTPimp V2.0a :: stable
+FTPimp V2.0.1 :: stable
 =====================
-FTP client for Windows and OSX / Linux.<br>
+
+FTP client for Windows and OSX / Linux.
+
 FTPimp is an (imp)roved implementation of the FTP service API for NodeJS. It has unique features that you'd otherwise expect an FTP client to have...
-
-
-Examples
---------
-
-**Tests provide an example for every (practical) endpoint in the library,** [see those here](https://github.com/sparkida/ftpimp/blob/master/test/index.js).
 
 
 Features
 --------
+
 FTPimp has several major benefits in comparison to other Node FTP clients:
 - Recursively put files, and create directories
 - Recursively delete directories
@@ -23,40 +20,19 @@ FTPimp has several major benefits in comparison to other Node FTP clients:
   
 
 
+
 API Documentation
 -----------------
-For a full breakdown of this API, including examples [&not;FTPimp.net](http://ftpimp.net)
 
+[Documentation for ftp-imp](http://ftpimp.net) can be found at the website [&not;http://ftpimp.net](http://ftpimp.net)
 
-
-Additional Info
----------------
-I have a working implementation of FTPimp in a file synchronization manager, built for developers in rapid release / multi-project scenarios, that I'll be releasing within the week to demonstrate.
-
-- by default, FTPimp uses passive connections for security purposes, but **you can override anything** you want pretty quickly to build a very robust FTP application. 
-- every queue runs on the same level the command was executed in and each queued command has the ability to group a series of commands into a single queue, this allows you to chain methods for building procedures such as the recursive mkdir procedure, which does exactly what it says: recurses through the FTP.mkdir command in a single queue.
-
-...TL;DR...
-
-Each call with ftp is sequential, if you make calls inside of calls, they are considered children.
-
-
-
-Callbacks
----------
-Almost every method allows for a callback to be passed as a parameter and almost every
-callback will follow the general parameter form of 
-```javascript
-function (error, result) {...
-```
-The only exception will be in the cases where no parameters are passed to the callback
-such as in `FTP.connect(callback)`.
-
+Tests provide an example for every (practical) endpoint in the library [&not;see those here](https://github.com/sparkida/ftpimp/blob/master/test/index.js).
 
 
 
 Default config
 --------------
+
 ```javascript
 var config = {
         host: 'localhost',
@@ -68,9 +44,35 @@ var config = {
 ```
 
 
-Samples
-=======
+Running pure FTP commands
+-------------------------
 
+**FTPimp's API exposes two main commands** to enable you full control over the flow of your application:
+
+1. [FTP.raw](http://ftpimp.net/FTP.html#raw) - allows you to immediately issue any FTP command; does not enqueue items;
+2. [FTP.run](http://ftpimp.net/FTP.html#run) - allows you to issue any FTP command; will add items at the end of the queue by default, but also has a [runLevel](file:///home/nick/ftpimp/docs/FTP.Queue.html#.RunLevels) for more granular control; also see helpers [FTP.runNow](http://ftpimp.net/FTP.html#runNow) and [FTP.runNext](http://ftpimp.net/FTP.html#runNext);
+	
+***NOTE: FTP.raw commands run outside of the queue and typically must be called when the queue is empty.***
+
+
+Callbacks
+---------
+
+Almost every method allows for a callback to be passed as a parameter and almost every
+callback will follow the general parameter form of 
+```javascript
+function (error, result) {...
+```
+The only exception will be in the cases where no parameters are passed to the callback
+such as in `FTP.connect(callback)`.
+
+
+
+
+Examples
+--------
+
+**Tests provide an example for every (practical) endpoint in the library,** [see those here](https://github.com/sparkida/ftpimp/blob/master/test/index.js).
 
 - Automatically login to FTP and run callback when ready
 
@@ -118,8 +120,59 @@ ftp.mkdir(tempDir + '/some/deep/directory', function (err, data) {
 
 
 
+Process Flow
+------------
+
+<h3>Understanding FTPimp's proprietary Queue</h3>
+
+- Every queue runs on the same level the command was executed in and each queued command has the ability to group a series of commands into a single queue, this allows you to chain methods for building procedures such as the recursive mkdir procedure, which does exactly what it says: recurses through the FTP.mkdir command in a single queue.
+
+***...TL;DR...***
+
+- Each call with ftp is sequential, if you make calls inside of calls, they are considered children.
+
+- Nested calls will run in the order they were issued. Encapsulated methods will only complete once all nested calls have completed.
+
+	- right way
+
+	```javascript
+	ftp.put('foo.js', function (err, res) {
+		if (!err) {
+			ftp.raw('MDTM foo.js', function (err, res) {
+				//...
+			});
+		}
+	});
+	```
+
+	- wrong way
+
+	```javascript
+
+	ftp.put('foo.js', function (err, res) {
+		//...
+	});
+	ftp.raw('MDTM foo.js', function (err, res) {
+		//...
+	});
+
+	```
+
+
+
+FTP Connection Types
+--------------------
+
+<h3>Passive vs Active</h3>
+
+By default, FTPimp uses passive connections for security purposes, but **you can override anything** you want pretty quickly to build a very robust FTP application. 
+
+
+
+
 Find a Bug?
 -----------
+
 Please let me know so that I can fix it ASAP, cheers 
 [&not;Report a Bug](https://github.com/sparkida/ftpimp/issues)
 
@@ -128,6 +181,7 @@ Please let me know so that I can fix it ASAP, cheers
 
 Updates
 -------
+
 * Sep 10, 2015 7:46am(PDT) - v2.0.0a! Alpha release. Major changes in architecture, 100% backwards compatible with v1.0+, documentation updated, testing suite moved to Mocha!
 	- FTP.type now returns an error instead of throwing one
 	- FTP.save no longer returns filename in the result parameter on error
