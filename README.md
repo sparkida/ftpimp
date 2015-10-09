@@ -1,5 +1,9 @@
-FTPimp V2.0.1 :: stable
-=====================
+FTPimp V2.2.0 :: stable
+=======================
+
+**Completely refactored**
+
+**Over 60 tests in suite**
 
 FTP client for Windows and OSX / Linux.
 
