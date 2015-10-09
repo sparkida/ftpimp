@@ -374,7 +374,6 @@ ExeQueue.prototype._closePipe = function () {
     dbg('ExeQueue> closing transfer pipe'.magenta);
     var exeQueue = this,
         data = exeQueue.pipeData;
-	exeQueue.endStopwatch();
     try {
         ftp.pipe.removeListener('data', exeQueue.receiveData);
         ftp.pipe.removeListener('end', exeQueue.closePipe);
@@ -383,6 +382,7 @@ ExeQueue.prototype._closePipe = function () {
     }
 	dbg('ExeQueue> total size(' + (data ? data.length : 0) + ')');
 	exeQueue.callback(null, data);
+	exeQueue.checkProc();
 };
 
 
@@ -530,8 +530,8 @@ FTP.prototype.queue = {//{{{
         ftp.queue._queue = [];
     },
     register: function (callback, runLevel) {
-        dbg('Queue> Registering callback...');
-        dbg(('Queue> processing: ' + ftp.queue.processing + '; size: ' + ftp.queue._queue.length).cyan);
+        console.log('Queue> Registering callback...');
+        console.log(('Queue> processing: ' + ftp.queue.processing + '; size: ' + ftp.queue._queue.length).cyan);
 		runLevel = runLevel === undefined ? false : runLevel;
 		if (runLevel) {
 			//run next
@@ -552,10 +552,10 @@ FTP.prototype.queue = {//{{{
         }
     },
     run: function () {
-        dbg('Queue> Loading queue'.yellow);
+        console.log('Queue> Loading queue'.yellow);
         if (ftp.queue._queue.length > 0) {
             ftp.queue.processing = true;
-            dbg('Queue> Loaded...running');
+            console.log('Queue> Loaded...running');
             ftp.queue.currentProc = ftp.queue._queue.shift();
             if (!ftp.error) {
                 ftp.queue.currentProc.call(ftp.queue.currentProc);
@@ -567,7 +567,7 @@ FTP.prototype.queue = {//{{{
              */
             ftp.emit('queueEmpty');
             ftp.queue.processing = false;
-            dbg('--queue empty--'.yellow);
+            console.log('--queue empty--'.yellow);
         }
     }
 };
@@ -1037,7 +1037,16 @@ FTP.prototype.put = (function () {//{{{
 						dbg('STOR: file saved ' + remotePath);
 						callback(null, remotePath);
 					}
-                });
+					console.log();
+					console.log();
+					console.log();
+					console.log();
+					console.log();
+					console.log('file put successful');
+					if (!curQueue.holdQueue) {
+						ftp.emit('endproc');
+					}
+                }, true);
             };
             //write file data to remote data socket
 			ftp.pipe.end(filedata, onEnd);
@@ -1105,6 +1114,7 @@ FTP.prototype.put = (function () {//{{{
         ftp.queue.register(function () {
             fs.readFile(localPath, pipeFile);
         }, runLevel);
+		console.log(ftp.queue._queue);
     };
 }());//}}}
 
@@ -1244,70 +1254,107 @@ FTP.prototype.mkdir.raw = 'MKD';
 FTP.prototype.rmdir = function (dirpath, callback, recursive, runLevel, holdQueue) {//{{{
 	recursive = !!recursive;
 	var deleted = [],
-		pending = 0,
+		pending = [],
+		pendingDirs = [],
+		dirStatObject = function (dir) {
+			var stat = new StatObject.Dummy(dir);
+			stat.isDirectory = true;
+			return stat;
+		},
 		noDots = function (statObj) {
 			return statObj.filename !== '.' && statObj.filename !== '..';
 		},
-		handleFileList = function (err, data) {
-			var bindUnlinkHandler = function (item) {
-					var cmd = item.isDirectory ? ftp.rmdir.raw : ftp.unlink.raw,
-						handleDeleteResponse = function (err) {
-							if (err) {
-								dbg('scanning directory: '.cyan, item.filename);
-								checkDir(err, item.filename);
-							} else {
-								pending -= 1;
-								dbg('file unlinked: '.yellow, item.filename);
-								deleted.push(item.filename);
-							}
-							dbg('pending2: ', pending);
-							if (pending === 0) {
-								ftp.runNext(ftp.rmdir.raw + ' ' + dirpath, function (err, res) {
-									if (deleted.indexOf(dirpath) === -1) {
-										deleted.push(dirpath);
-									}
-									dbg('last file removed @' + dirpath);
-									callback(err, deleted);
-								}, holdQueue);
-							}
-						};
-					cmd += ' ' + path.join(dirpath, item.filename);
-					ftp.runNext(cmd, handleDeleteResponse, holdQueue);
+		bindUnlinkHandler = function (item) {
+			console.log(55123235, item,15125125);
+			var cmd = item.isDirectory ? ftp.rmdir.raw : ftp.unlink.raw,
+				filepath,
+				handleDeleteResponse = function (err) {
+					if (err) {
+						console.log('scanning directory: '.cyan, item.filename);
+						//restack item
+						checkDir(err, item.filename);
+						return;
+					} else {
+						console.log('file unlinked: '.yellow, item.filename);
+						deleted.push(item.filename);
+					}
+					console.log('pending2: ', pending.length);
+					if (pending.length > 0) {
+						console.log('continuing remove file');
+						unlink();
+					} else {
+						console.log('last file removed @' + filepath);
+						if (pendingDirs.length > 0) {
+							console.log(1);
+							unlinkDir();
+						} else {
+							console.log('removing last dir', dirpath);
+							console.log(ftp.rmdir.raw + ' ' + dirpath);
+							ftp.runNow(ftp.rmdir.raw + ' ' + dirpath, function (err, data) {
+								deleted.push(dirpath);
+								console.log('main directory removed @dirpath');
+								callback(err, deleted);
+								if (!holdQueue) {
+									ftp.emit('endproc');
+								}
+							}, true);
+						}
+					}
 				};
 
+			filepath = path.join(dirpath, item.filename);
+			console.log('rmdir: removing "' + filepath + '"');
+			ftp.runNow(cmd + ' ' + filepath, handleDeleteResponse, true);
+		},
+		unlinkDir = function () {
+			console.log('unlinking dir object');
+			bindUnlinkHandler(pendingDirs.pop());
+		},
+		unlink = function () {
+			console.log('unlinking file object');
+			bindUnlinkHandler(pending.shift());
+		},
+		unique = function (item, pos, arr) {
+			return arr.indexOf(item) == pos;
+		},
+		handleFileList = function (err, data) {
+			console.log('pending0: ', pending.length);
 			if (err) {
-				dbg('file list'.red, err);
+				console.log('file list'.red, err);
 				callback(err, data);
 			} else {
 				data = data.filter(noDots);
-				dbg('file list'.green, pending, err, data);
-				pending += data.length;
-				data.forEach(bindUnlinkHandler);
+				console.log('file list'.green, pending, err, data);
+				pending = data.concat(pending).filter(unique);
+				console.log('pending1: ', pending.length);
+				unlink();
 			}
-			dbg('pending1: ', pending);
 		},
 		checkDir = function (err, data) {
-			dbg('checking dir:');
-			dbg(err, data);
+			console.log('checking dir:'.cyan);
+			console.log('checking dir:');
+			console.log(err, data);
 			if (!recursive) {
-				dbg('ending !recursive'.red);
+				console.log('ending !recursive'.red);
 				return callback(err, deleted);
 			}
 			if (!err) {
 				pending -= 1;
-				dbg('rmdir> directory deleted'.yellow, dirpath);
+				console.log('rmdir> directory deleted'.yellow, dirpath);
 				deleted.push(dirpath);
 				callback(err, deleted);
-			} else if (null === data) {
-				dbg('need to ls directory', dirpath, holdQueue);
-				//open the queue immediately after this callback
-				ftp.ls(dirpath, handleFileList, Queue.RunNext, holdQueue);
 			} else {
-				dbg('ls subdirectory', data);
-				ftp.ls(data, handleFileList, Queue.RunNext, holdQueue);
+				//add file to list of items needed to be removed
+				if (data) {
+					pendingDirs.push(dirStatObject(data));
+				}
+				data = data ? data : dirpath;
+				console.log('need to ls directory', data);
+				//open the queue immediately after this callback
+				ftp.ls(data, handleFileList, Queue.RunNow, true);
 			}
 		};
-    ftp.run(ftp.rmdir.raw + ' ' + dirpath, checkDir, runLevel, holdQueue);
+    ftp.run(ftp.rmdir.raw + ' ' + dirpath, checkDir, runLevel, true);
 };//}}}
 FTP.prototype.rmdir.raw = 'RMD';
 
@@ -1324,7 +1371,7 @@ FTP.prototype.getcwd = function (callback, runLevel, holdQueue) {//{{{
             ftp.cwd = data;
         }
         callback.call(callback, err, data);
-    }, runLevel, holdQueu);
+    }, runLevel, holdQueue);
 };//}}}
 FTP.prototype.getcwd.raw = 'PWD';
 
@@ -1467,6 +1514,20 @@ StatObject = function (stat) {//{{{
     }
     that.filename = that.isSymbolicLink ? stat[8][0] : stat[8];
 };//}}}
+
+/**
+ * Creates a new file stat object similar to Node's fs.stat method, this
+ * dummy object is ideal for manipulating your own StatObjects
+ * @constructor
+ * @memberof FTP
+ * @param {string} filename - the filename to set for the stat object 
+ * i.e.<br><b>"drwxr-xr-x    2 userfoo   groupbar         4096 Jun 12:43 filename"</b>
+ */
+StatObject.Dummy = function (filename) {
+	this.filename = filename ? filename : '';
+};
+
+StatObject.Dummy.prototype = StatObject.prototype;
 
 FTP.prototype.StatObject = StatObject;
 

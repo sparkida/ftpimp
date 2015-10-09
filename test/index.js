@@ -299,6 +299,7 @@ describe('FTPimp', function () {
 	});
 
 	describe('rmdir#RMD: recursively remove remote directory', function () {
+		this.timeout(4000);
 		/*
 		this.timeout(3000);
 		it ('should recursively remove the directory ' + testDir, function (done) {
@@ -335,16 +336,28 @@ describe('FTPimp', function () {
 				done();
 			}, true);
 		});
-		*/
-		it.only ('should recursively remove the directory ' + testDir, function (done) {
-			ftp.debug.enable();
+		it.only ('should recursively remove files in the directory ' + testDir, function (done) {
 			ftp.mkdir(path.join(testDir, 'foo'), function(){
-				console.log(111);
-				ftp.put(['./test/test.png', path.join(testDir, 'foo', 'test.png')], function(){}, Queue.RunNext);
 				ftp.put(['./test/test.png', path.join(testDir, 'foo.png')], function(){}, Queue.RunNext);
+				ftp.put(['./test/test.png', path.join(testDir, 'foo1.png')], function(){}, Queue.RunNext);
 				ftp.put(['./test/test.png', path.join(testDir, 'foo2.png')], function(){}, Queue.RunNext);
 			}, true);
-
+			
+			ftp.rmdir(testDir, function (err, res) {
+				assert(!err, err);
+				assert.equal(res.length, 4);
+				done();
+			}, true);
+		});
+		*/
+		it.only ('should recursively remove files in the directory ' + testDir, function (done) {
+			ftp.mkdir(path.join(testDir, 'foo'), function(){
+				ftp.put(['./test/test.png', path.join(testDir, 'foo', 'foo.png')], function(){}, Queue.RunNext);
+				ftp.put(['./test/test.png', path.join(testDir, 'foo', 'foo1.png')], function(){}, Queue.RunNext);
+				ftp.put(['./test/test.png', path.join(testDir, 'test.png')], function(){}, Queue.RunNext);
+				ftp.put(['./test/test.png', path.join(testDir, 'test1.png')], function(){}, Queue.RunNext);
+			}, true);
+			
 			ftp.rmdir(testDir, function (err, res) {
 				assert(!err, err);
 				assert.equal(res.length, 4);
