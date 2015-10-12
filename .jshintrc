@@ -1,20 +1,8 @@
 {
-    //Support callbacks in loops
-    "loopfunc": true,
-    "node": true,
-    "mocha": true,
-    "undef": true,
-    "unused": "vars",
     "curly": true,
-    "predef": [
-		"app",
-		"config",
-		"appRoot",
-		"slotsRoot",
-		"commonRoot",
-		"gameRoot",
-		"pushRoot",
-		"logger",
-		"Enum"
-    ]
+    "loopfunc": true,
+    "mocha": true,
+    "node": true,
+    "undef": true,
+    "unused": "vars"
 }

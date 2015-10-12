@@ -1,9 +1,5 @@
-FTPimp V2.2.0 :: stable
-=======================
-
-**Completely refactored**
-
-**Over 60 tests in suite**
+FTPimp V2.2.2rc
+===============
 
 FTP client for Windows and OSX / Linux.
 
@@ -30,12 +26,55 @@ API Documentation
 
 [Documentation for ftp-imp](http://ftpimp.net) can be found at the website [&not;http://ftpimp.net](http://ftpimp.net)
 
-Tests provide an example for every (practical) endpoint in the library [&not;see those here](https://github.com/sparkida/ftpimp/blob/master/test/index.js).
+**Tests provide an example for every (practical) endpoint in the library** [&not;see those here](https://github.com/sparkida/ftpimp/blob/master/test/index.js).
 
 
+Process flow and Queueing procedures
+------------------------------------
 
-Default config
---------------
+**By default, every call is sequential.** To have more granular control, use the [Queue.RunLevels](http://ftpimp.net/FTP.Queue.html#.RunLevels)
+
+You'll likely only need to use "Queue.RunNext" to prioritize a command over any subsequent commands. In
+the example below (**#1**), the sequence is [**mkdir**, **ls**, **put**]
+
+***example #1:***
+
+```javascript
+//make a "foo" directory
+ftp.mkdir('foo', function (err, dir) { //runs first
+	ftp.put(['bar.txt', 'foo/bar.txt'], function (err, filename) { //runs third
+	});
+});
+
+ftp.ls('foo', function (err, filelist) { //runs second
+	...
+});
+```
+
+
+While in the next example below(#2) we use [Queue.RunNext](http://ftpimp.net/FTP.Queueu.html#.RunNext)
+to prioritize our "put", over that of the "ls", making our sequence [**mkdir**, **put**, **ls**]
+
+***example #2:***
+
+```javascript
++var Queue = FTP.Queue;
+//make a "foo" directory
+ftp.mkdir('foo', function (err, dir) { //runs first
+	ftp.put(['bar.txt', 'foo/bar.txt'], function (err, filename) { //runs second
+-	});
++	}, Queue.RunNext);
+});
+
+ftp.ls('foo', function (err, filelist) { //runs third
+	...
+});
+```
+
+Examples
+--------
+
+**Default config**
 
 ```javascript
 var config = {
@@ -47,38 +86,7 @@ var config = {
     };
 ```
 
-
-Running pure FTP commands
--------------------------
-
-**FTPimp's API exposes two main commands** to enable you full control over the flow of your application:
-
-1. [FTP.raw](http://ftpimp.net/FTP.html#raw) - allows you to immediately issue any FTP command; does not enqueue items;
-2. [FTP.run](http://ftpimp.net/FTP.html#run) - allows you to issue any FTP command; will add items at the end of the queue by default, but also has a [runLevel](file:///home/nick/ftpimp/docs/FTP.Queue.html#.RunLevels) for more granular control; also see helpers [FTP.runNow](http://ftpimp.net/FTP.html#runNow) and [FTP.runNext](http://ftpimp.net/FTP.html#runNext);
-	
-***NOTE: FTP.raw commands run outside of the queue and typically must be called when the queue is empty.***
-
-
-Callbacks
----------
-
-Almost every method allows for a callback to be passed as a parameter and almost every
-callback will follow the general parameter form of 
-```javascript
-function (error, result) {...
-```
-The only exception will be in the cases where no parameters are passed to the callback
-such as in `FTP.connect(callback)`.
-
-
-
-
-Examples
---------
-
-**Tests provide an example for every (practical) endpoint in the library,** [see those here](https://github.com/sparkida/ftpimp/blob/master/test/index.js).
-
-- Automatically login to FTP and run callback when ready
+**Automatically login to FTP and run callback when ready**
 
 ```javascript
 var FTP = require('ftpimp'),
@@ -90,7 +98,7 @@ var FTP = require('ftpimp'),
 ftp.events.once('ready', connected);
 ```
 
-- Setup FTPimp and login whenever
+**Setup FTPimp and login whenever**
 
 ```javascript
 var FTP = require('ftpimp'),
@@ -102,66 +110,45 @@ ftp.connect(function () {
 });
 ```
 
-- Recursively create directories and delete them.
+**Put file to remote server**
 
 ```javascript
-//create a temporary directory name
-var tempDir = 'foo' + String(new Date().getTime()),
-    recursive = true;
-
-ftp.mkdir(tempDir + '/some/deep/directory', function (err, data) {
-    if (err) {
-        console.log(err);
-    } else {
-        console.log('directories created: ', data);
-        //recursively delete our temporary directory
-        ftp.rmdir(tempDir, function (err, data) {
-            console.log(err, data);   
-        });
-    }
-}, recursive);
+ftp.put(['path/to/localfile', 'remotepath'], function (err, filename) {
+	console.log(err, filename);
+});
 ```
 
+**Get file from remote server**
 
+```javascript
+ftp.save(['path/to/remotefile', 'path/to/local/savefile'], function (err, filename) {
+	console.log(err, filename);
+});
+```
 
-Process Flow
-------------
+**Recursively create directories.**
 
-<h3>Understanding FTPimp's proprietary Queue</h3>
+```javascript
+ftp.mkdir('foo/deep/directory', function (err, created) {
+	console.log(err, created);
+}, true);
+```
 
-- Every queue runs on the same level the command was executed in and each queued command has the ability to group a series of commands into a single queue, this allows you to chain methods for building procedures such as the recursive mkdir procedure, which does exactly what it says: recurses through the FTP.mkdir command in a single queue.
+**Recursively delete directories and their contents**
 
-***...TL;DR...***
+```javascript
+ftp.rmdir('foo', function (err, deleted) {
+	console.log(err, deleted);
+}, true);
+```
 
-- Each call with ftp is sequential, if you make calls inside of calls, they are considered children.
+**List remote directory contents**
 
-- Nested calls will run in the order they were issued. Encapsulated methods will only complete once all nested calls have completed.
-
-	- right way
-
-	```javascript
-	ftp.put('foo.js', function (err, res) {
-		if (!err) {
-			ftp.raw('MDTM foo.js', function (err, res) {
-				//...
-			});
-		}
-	});
-	```
-
-	- wrong way
-
-	```javascript
-
-	ftp.put('foo.js', function (err, res) {
-		//...
-	});
-	ftp.raw('MDTM foo.js', function (err, res) {
-		//...
-	});
-
-	```
-
+```javascript
+ftp.ls('foo', function (err, filelist) {
+	console.log(err, filelist);
+});
+```
 
 
 FTP Connection Types
@@ -185,8 +172,12 @@ Please let me know so that I can fix it ASAP, cheers
 
 Updates
 -------
-
-* Sep 10, 2015 7:46am(PDT) - v2.0.0a! Alpha release. Major changes in architecture, 100% backwards compatible with v1.0+, documentation updated, testing suite moved to Mocha!
+* Oct 12, 2015 8:11am(PDT) - v2.2.2rc All tests passing;
+	- Queueing order is sequential by default, this may break compatability, but resolves a lot of issues and removes barriers in progressive enhancements;	   
+	- Readme simplified, more examples, less clutter thanks to ^;
+	- Greatly refactored: put, rmdir, mkdir, setType;
+	- ls and lsnames now return an empty array instead of false when no files are found
+* Sep 10, 2015 7:46am(PDT) - v2.0.0a! Alpha release. Major changes in architecture, documentation updated, testing suite moved to Mocha!
 	- FTP.type now returns an error instead of throwing one
 	- FTP.save no longer returns filename in the result parameter on error
 * May 14, 2015 8:50am(PDT) - v1.3! Addresses issues that occur when working in cross platform environment. This added automated switching between `binary` and `ascii(default)`

@@ -2026,7 +2026,7 @@ FTP.prototype.site = function () {
 
 
 /**
- * @class DEPRECATED! use {@link Queue}
+ * @class DEPRECATED! use {@link FTP.Queue}
  */
 FTP.prototype.SimpleQueue = Queue;
 FTP.prototype.Queue = Queue;

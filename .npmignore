@@ -5,7 +5,7 @@ start
 test
 site
 log
-config.json
+config.js
 .git
 .gitignore
 .npmignore
