@@ -1,6 +1,6 @@
 {
   "name": "ftp-imp",
-  "version": "2.2.1",
+  "version": "2.2.2",
   "preferGlobal": false,
   "license": "MIT",
   "homepage": "http://ftpimp.net",
@@ -24,7 +24,6 @@
     "mget"
   ],
   "devDependencies": {
-    "chai": "^3.0.x",
     "jsdoc": "^3.3.x",
     "mocha": "^2.3.x"
   },
