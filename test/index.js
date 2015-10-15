@@ -57,6 +57,12 @@ describe('FTPimp', function () {
 				done(err);
 			}, true);
 		});
+		it ('succeeds at making a directory with a space', function (done) {
+			ftp.mkdir(path.join(testDir, 'foo bar'), function (err, res) {
+				assert(res.length, 1, 'Could not add directories');
+				done(err);
+			}, true);
+		});
 		it ('fails', function (done) {
 			ftp.mkdir('', function (err, res) {
 				assert(err instanceof Error);
@@ -206,10 +212,18 @@ describe('FTPimp', function () {
 	});
 
 	describe('save: retrieve remote file and save to local', function () {
+		var saved = [];
 		it ('succeeds', function (done) {
 			ftp.save(['ind.js', 'ind-ftpimp-remote-saved.js'], function (err, res) {
 				assert(!!res);
-				fs.unlink('ind-ftpimp-remote-saved.js', function (delError, res) {
+				saved.push(res);
+				fs.unlink('ind-ftpimp-remote-saved.js', function (delError, res) {});
+			});
+			ftp.save(['ind.js', 'ind-ftpimp-remote-saved2.js'], function (err, res) {
+				assert(!!res);
+				saved.push(res);
+				assert.deepEqual(['ind-ftpimp-remote-saved.js', 'ind-ftpimp-remote-saved2.js'], saved);
+				fs.unlink('ind-ftpimp-remote-saved2.js', function (delError, res) {
 					done(delError);
 				});
 			});
@@ -307,7 +321,7 @@ describe('FTPimp', function () {
 			ftp.mkdir(path.join(testDir, 'foo'), function(){}, true);
 			ftp.rmdir(testDir, function (err, res) {
 				assert(!err, err);
-				assert.equal(res.length, 2);
+				assert.equal(res.length, 3);
 				done();
 			}, true);
 		});
