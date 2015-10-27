@@ -310,7 +310,7 @@ var ExeQueue = function (command, callback, runLevel, holdQueue) {
             };
         that.command = command;
         that.method = method;
-        that.pipeData = null;
+        that.pipeData = '';
         that.holdQueue = holdQueue;
         that.callback = callback;
         that.runLevel = runLevel;
