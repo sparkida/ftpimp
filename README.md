@@ -1,5 +1,5 @@
-FTPimp V2.2.2rc
-===============
+FTPimp
+======
 
 FTP client for Windows and OSX / Linux.
 
