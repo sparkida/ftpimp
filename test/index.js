@@ -130,7 +130,7 @@ describe('FTPimp', function () {
 			});
 		});
 		it ('changes to binary for images', function (done) {
-			ftp.setType('test.png', function (err, res) {
+			ftp.setType('ftpimp.jpg', function (err, res) {
 				assert(ftp.currentType, 'binary');
 				done();
 			});
@@ -144,13 +144,22 @@ describe('FTPimp', function () {
 	});
 	
 	describe('put: transfers files to remote', function () {
-		it('succeeds', function (done) {
+		this.timeout(5000);
+		it ('succeeds', function (done) {
 			ftp.put(['./test/index.js', 'index.js'], function (err, res) {
+				assert.equal(ftp.currentType, 'ascii');
 				assert.equal(res, 'index.js');
-				ftp.put(['./test/test.png', 'test.png'], function (err, res) {
-					assert.equal(res, 'test.png');
-					done(err);
-				});
+				assert(!err);
+			});
+			ftp.put(['./test/ftpimp.jpg', 'ftpimp.jpg'], function (err, res) {
+				assert.equal(ftp.currentType, 'binary');
+				assert.equal(res, 'ftpimp.jpg');
+				assert(!err);
+			});
+			ftp.put(['./test/foo.pdf', 'foo.pdf'], function (err, res) {
+				assert.equal(ftp.currentType, 'binary');
+				assert.equal(res, 'foo.pdf');
+				done(err);
 			});
 		});
 		it ('fails', function (done) {
@@ -181,23 +190,19 @@ describe('FTPimp', function () {
 	describe('get#RETR: retrieve remote file', function () {
 		it ('succeeds at getting ASCII text file', function (done) {
 			ftp.get('ind.js', function (err, res) {
+				assert.equal(ftp.currentType, 'ascii');
 				assert(typeof res === 'string');
 				done(err);
 			});
 		});
 		it ('succeeds at getting binary image file', function (done) {
-			ftp.type('binary', function (err, res) {
-				if(err) {
+			ftp.get('ftpimp.jpg', function (err, res) {
+				assert.equal(ftp.currentType, 'binary');
+				if (err) {
 					done(err);
 				} else {
-					ftp.get('test.png', function (err, res) {
-						if (err) {
-							done(err);
-						} else {
-							assert(typeof res === 'string');
-							done();
-						}
-					});
+					assert(typeof res === 'string');
+					done();
 				}
 			});
 
@@ -213,19 +218,25 @@ describe('FTPimp', function () {
 
 	describe('save: retrieve remote file and save to local', function () {
 		var saved = [];
-		it ('succeeds', function (done) {
-			ftp.save(['ind.js', 'ind-ftpimp-remote-saved.js'], function (err, res) {
-				assert(!!res);
-				saved.push(res);
-				fs.unlink('ind-ftpimp-remote-saved.js', function (delError, res) {});
-			});
-			ftp.save(['ind.js', 'ind-ftpimp-remote-saved2.js'], function (err, res) {
-				assert(!!res);
-				saved.push(res);
-				assert.deepEqual(['ind-ftpimp-remote-saved.js', 'ind-ftpimp-remote-saved2.js'], saved);
-				fs.unlink('ind-ftpimp-remote-saved2.js', function (delError, res) {
+		after(function (done) {
+			fs.unlink(saved[0], function (delError, res) {
+				fs.unlink(saved[1], function (delError, res) {
 					done(delError);
 				});
+			});
+		});
+		it ('succeeds', function (done) {
+			ftp.save(['ind.js', 'saved-ind.js'], function (err, res) {
+				assert.equal(ftp.currentType, 'ascii');
+				assert(!!res);
+				saved.push(res);
+			});
+			ftp.save(['ftpimp.jpg', 'saved-ftpimp.jpg'], function (err, res) {
+				assert.equal(ftp.currentType, 'binary');
+				assert(!!res);
+				saved.push(res);
+				assert.deepEqual(['saved-ind.js', 'saved-ftpimp.jpg'], saved);
+				done();
 			});
 		});
 		it ('fails', function (done) {
@@ -291,8 +302,8 @@ describe('FTPimp', function () {
 		it ('succeeds', function (done) {
 			ftp.unlink('ind.js', function (err, res) {
 				assert.equal(res, 'ind.js');
-				ftp.unlink('test.png', function (err, res) {
-					assert.equal(res, 'test.png');
+				ftp.unlink('ftpimp.jpg', function (err, res) {
+					assert.equal(res, 'ftpimp.jpg');
 					done(err);
 				});
 			});
@@ -321,7 +332,7 @@ describe('FTPimp', function () {
 			ftp.mkdir(path.join(testDir, 'foo'), function(){}, true);
 			ftp.rmdir(testDir, function (err, res) {
 				assert(!err, err);
-				assert.equal(res.length, 3);
+				assert.equal(res.length, 4);
 				done();
 			}, true);
 		});
@@ -343,7 +354,7 @@ describe('FTPimp', function () {
 		});
 		it ('should recursively remove the directory in queue order: ' + testDir, function (done) {
 			ftp.mkdir(path.join(testDir, 'foo'), function(){
-				ftp.put(['./test/test.png', path.join(testDir, 'test.png')], function(){}, Queue.RunNext);
+				ftp.put(['./test/ftpimp.jpg', path.join(testDir, 'ftpimp.jpg')], function(){}, Queue.RunNext);
 			}, true);
 			ftp.rmdir(testDir, function (err, res) {
 				assert(!err, err);
@@ -353,9 +364,9 @@ describe('FTPimp', function () {
 		});
 		it ('should recursively remove files in the directory ' + testDir, function (done) {
 			ftp.mkdir(path.join(testDir, 'foo'), function(){
-				ftp.put(['./test/test.png', path.join(testDir, 'foo.png')], function(){}, Queue.RunNext);
-				ftp.put(['./test/test.png', path.join(testDir, 'foo1.png')], function(){}, Queue.RunNext);
-				ftp.put(['./test/test.png', path.join(testDir, 'foo2.png')], function(){}, Queue.RunNext);
+				ftp.put(['./test/ftpimp.jpg', path.join(testDir, 'foo.jpg')], function(){}, Queue.RunNext);
+				ftp.put(['./test/ftpimp.jpg', path.join(testDir, 'foo1.jpg')], function(){}, Queue.RunNext);
+				ftp.put(['./test/ftpimp.jpg', path.join(testDir, 'foo2.jpg')], function(){}, Queue.RunNext);
 			}, true);
 			
 			ftp.rmdir(testDir, function (err, res) {
@@ -376,10 +387,10 @@ describe('FTPimp', function () {
 		});
 		it ('should recursively remove files in the directory ' + testDir, function (done) {
 			ftp.mkdir(path.join(testDir, 'foo'), function(){
-				ftp.put(['./test/test.png', path.join(testDir, 'foo', 'foo.png')], function(){}, Queue.RunNext);
-				ftp.put(['./test/test.png', path.join(testDir, 'foo', 'foo1.png')], function(){}, Queue.RunNext);
-				ftp.put(['./test/test.png', path.join(testDir, 'test.png')], function(){}, Queue.RunNext);
-				ftp.put(['./test/test.png', path.join(testDir, 'test1.png')], function(){}, Queue.RunNext);
+				ftp.put(['./test/ftpimp.jpg', path.join(testDir, 'foo', 'foo.jpg')], function(){}, Queue.RunNext);
+				ftp.put(['./test/ftpimp.jpg', path.join(testDir, 'foo', 'foo1.jpg')], function(){}, Queue.RunNext);
+				ftp.put(['./test/ftpimp.jpg', path.join(testDir, 'ftpimp.jpg')], function(){}, Queue.RunNext);
+				ftp.put(['./test/ftpimp.jpg', path.join(testDir, 'test1.jpg')], function(){}, Queue.RunNext);
 			}, true);
 			
 			ftp.rmdir(testDir, function (err, res) {
