@@ -364,10 +364,10 @@ ExeQueue.prototype._checkProc = function () {
 
 
 ExeQueue.prototype._closeTransfer = function () {
-    dbg('ExeQueue> closing transfer pipe'.magenta);
+    dbg('ExeQueue> closing transfer and ending Proc'.magenta);
     var exeQueue = this;
 	exeQueue.closePipe();
-	exeQueue.checkProc();
+	//exeQueue.checkProc();
 };
 
 ExeQueue.prototype._closePipe = function () {
@@ -990,7 +990,7 @@ FTP.prototype.put = (function () {//{{{
             };
 
         if (running) {
-            dbg('Put> already running'.yellow);
+            throw new Error('Put> already running'.yellow);
             return;
         }
         ftp.pipeActive = running = true;
@@ -1010,40 +1010,29 @@ FTP.prototype.put = (function () {//{{{
         }
         dataTransfer = function (runLevel) {
             var callback = curQueue.callback,
-                remotePath = curQueue.path,
-                filedata = curQueue.data,
-                onEnd;
+                remotePath = curQueue.path;
 
             if (checkAborted()) {
-                dbg(1);
+                dbg('Put was aborted');
                 return;
             }
-            onEnd = function () {
-                dbg('----saving remote file----'.cyan);
-                ftp.pipeActive = running = false;
-                if (checkAborted()) {
-                    dbg(3);
-                    return;
-                }
-                dbg('---data piped--- running STOR');
-
-                //send command through command socket to stor file immediately
-                ftp.runNow('STOR ' + remotePath, function (err, data) {
-					if (curQueue.err) {
-						dbg('STOR: error occured');
-						callback(curQueue.err, null);
-					} else {
-						dbg('STOR: file saved ' + remotePath);
-						callback(null, remotePath);
-					}
-					dbg('file put successful');
-					if (!curQueue.holdQueue) {
-						ftp.emit('endproc');
-					}
-                }, true);
-            };
+			ftp.runNow('STOR ' + remotePath, function (err, data) {
+				ftp.pipeActive = running = false;
+				if (curQueue.err) {
+					dbg('STOR: error occured');
+					callback(curQueue.err, null);
+				} else {
+					dbg('STOR: file saved ' + remotePath);
+					callback(null, remotePath);
+				}
+				dbg('file put successful', curQueue.data);
+				if (!curQueue.holdQueue) {
+					ftp.emit('endproc');
+				}
+			}, true);
             //write file data to remote data socket
-			ftp.pipe.end(filedata, onEnd);
+			curQueue.stream = fs.createReadStream(curQueue.data);
+			curQueue.stream.pipe(ftp.pipe);
         };
         //make sure pipe wasn't aborted
         ftp.once('pipeAborted', checkAborted);
@@ -1051,6 +1040,7 @@ FTP.prototype.put = (function () {//{{{
 			curQueue.err = err;
 			ftp.removeListener('pipeAborted', checkAborted);
 		});
+		
         ftp.setType(curQueue.path, function () {
             ftp.openDataPort(dataTransfer, Queue.RunNow, true);
         }, Queue.RunNow, true);
@@ -1080,9 +1070,11 @@ FTP.prototype.put = (function () {//{{{
         //the files may be read at different times
         //into the pipeFile callback
         dbg('>queueing file for put process: "' + localPath + '" to "' + remotePath + '"');
-        pipeFile = function (err, filedata) {
+        pipeFile = function (err, stat) {
             dbg(('>piping file: ' + localPath).green);
-            if (err) {
+			if (!err && stat.isDirectory()) {
+				err = new Error('Cannot put directory @', localPath);
+			} else if (err) {
                 dbg('>file read error', err);
                 queue = {
                     callback: callback,
@@ -1095,7 +1087,7 @@ FTP.prototype.put = (function () {//{{{
                 dbg('>queueing file: "' + localPath + '" to "' + remotePath + '"');
                 queue = {
                     callback: callback,
-                    data: filedata,
+                    data: localPath,
                     path: remotePath,
                     runLevel: runLevel,
                     holdQueue: holdQueue
@@ -1106,7 +1098,7 @@ FTP.prototype.put = (function () {//{{{
 		//enqueue a call; preprend call to the ftp queue of commands
 		//so we don't break order of operations
         ftp.queue.register(function () {
-            fs.readFile(localPath, pipeFile);
+            fs.stat(localPath, pipeFile);
         }, runLevel);
     };
 }());//}}}
@@ -1910,6 +1902,7 @@ FTP.prototype.type = function (type, secondType, callback, runLevel, holdQueue) 
         holdQueue = runLevel;
         runLevel = callback;
         callback = secondType;
+		secondType = undefined;
     }
     if (undefined === type || undefined === that.typeMap[type]) {
         return callback(new Error('ftp.type > parameter 1 expected valid FTP TYPE; [ascii, binary, ebcdic, local]'), null);
@@ -1919,8 +1912,11 @@ FTP.prototype.type = function (type, secondType, callback, runLevel, holdQueue) 
         cmd += ' ' + that.secondTypeMap[secondType];
     }
     //update currentType and run
-    ftp.currentType = type;
-    ftp.run(FTP.prototype.type.raw + ' ' + cmd, callback, runLevel, holdQueue);
+	var done = function (err, data) {
+			ftp.currentType = type;
+			callback.call(callback, err, data);
+		};
+    ftp.run(FTP.prototype.type.raw + ' ' + cmd, done, runLevel, holdQueue);
 };
 FTP.prototype.type.raw = 'TYPE';
 
@@ -1939,35 +1935,41 @@ FTP.prototype.setType = function (filepath, callback, runLevel, holdQueue) {
 			if (!holdQueue) {
 				ftp.emit('endproc');
 			}
+		},
+		args = [undefined, callback, runLevel, holdQueue],
+		changeType = function (type) {
+			args[0] = type;
+			ftp.type.apply(ftp, args);
 		};
     if (filepath.indexOf('.') > -1) {
 		//dot files eg .htaccess 
         if (filepath.indexOf('.') === 0) {
             if (ftp.currentType !== 'ascii') {
-                ftp.type('ascii', callback, runLevel, holdQueue);
+                changeType('ascii');
             } else {
                 ftp.queue.register(hijack, runLevel);
             }
         } else {
             ext = filepath.split('.').pop();
-            if (undefined === ftp.ascii[ext]) {
+            if (undefined !== ftp.ascii[ext]) {
                 if (ftp.currentType !== 'ascii') {
-                    ftp.type('ascii', callback, runLevel, holdQueue);
+                    changeType('ascii');
                 } else {
 					ftp.queue.register(hijack, runLevel);
                 }
             } else if (ftp.currentType === 'ascii') {
-                ftp.type('binary', callback, runLevel, holdQueue);
+                changeType('binary');
             } else {
 				ftp.queue.register(hijack, runLevel);
             }
         }
     } else if (ftp.currentType !== 'ascii') {
-        ftp.type('ascii', callback, runLevel, holdQueue);
+        changeType('ascii');
     } else {
 		ftp.queue.register(hijack, runLevel);
     }
 };
+
 
 
 /**
