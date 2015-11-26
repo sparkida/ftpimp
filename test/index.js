@@ -57,6 +57,12 @@ describe('FTPimp', function () {
 				done(err);
 			}, true);
 		});
+		it ('succeeds at making directory with a character', function (done) {
+			ftp.mkdir(path.join(testDir, '中文'), function (err, res) {
+				assert(res.length, 2, 'Could not add directories');
+				done(err);
+			}, true);
+		});
 		it ('succeeds at making a directory with a space', function (done) {
 			ftp.mkdir(path.join(testDir, 'foo bar'), function (err, res) {
 				assert(res.length, 1, 'Could not add directories');
@@ -268,6 +274,13 @@ describe('FTPimp', function () {
 		it ('succeeds', function (done) {
 			ftp.ls('', function (err, res) {
 				assert(Array.isArray(res));
+				charFound = false;
+				res.forEach(function (stat) {
+					if (stat.filename === '中文') {
+						charFound = true;
+					}
+				});
+				assert(charFound, 'Could not find a file with the "#" character');
 				done(err);
 			});
 		});
@@ -332,7 +345,7 @@ describe('FTPimp', function () {
 			ftp.mkdir(path.join(testDir, 'foo'), function(){}, true);
 			ftp.rmdir(testDir, function (err, res) {
 				assert(!err, err);
-				assert.equal(res.length, 4);
+				assert.equal(res.length, 5);
 				done();
 			}, true);
 		});
