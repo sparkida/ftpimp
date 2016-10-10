@@ -95,7 +95,7 @@ var FTP = require('ftpimp'),
         console.log('connected to remote FTP server');
     };
     
-ftp.events.once('ready', connected);
+ftp.once('ready', connected);
 ```
 
 **Setup FTPimp and login whenever**
