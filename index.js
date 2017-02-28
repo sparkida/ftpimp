@@ -991,7 +991,6 @@ FTP.prototype.put = (function () {//{{{
 
         if (running) {
             throw new Error('Put> already running'.yellow);
-            return;
         }
         ftp.pipeActive = running = true;
 
@@ -1468,13 +1467,14 @@ FTP.prototype.save = function (paths, callback) {//{{{
 
     dbg('>saving file: ' + remotePath + ' to ' + localPath);
     dataHandler = function (err, data) {
-        if (err) {
-            callback.call(callback, err, null);
-        } else {
-            fs.writeFile(localPath, data, function (err) {
-                callback.call(callback, err, localPath);
-            });
+        if (!err) {
+            try {
+                fs.writeFileSync(localPath, data);
+            } catch (e) {
+                err = e;
+            }
         }
+        callback.call(callback, err, localPath);
     };
     ftp.get(remotePath, dataHandler);
 };//}}}
@@ -1941,32 +1941,25 @@ FTP.prototype.setType = function (filepath, callback, runLevel, holdQueue) {
 			args[0] = type;
 			ftp.type.apply(ftp, args);
 		};
-    if (filepath.indexOf('.') > -1) {
-		//dot files eg .htaccess 
-        if (filepath.indexOf('.') === 0) {
-            if (ftp.currentType !== 'ascii') {
-                changeType('ascii');
-            } else {
-                ftp.queue.register(hijack, runLevel);
-            }
+    let dotIndex = filepath.indexOf('.');
+    let ensureType = () => {
+        if (ftp.currentType !== 'ascii') {
+            changeType('ascii');
         } else {
-            ext = filepath.split('.').pop();
-            if (undefined !== ftp.ascii[ext]) {
-                if (ftp.currentType !== 'ascii') {
-                    changeType('ascii');
-                } else {
-					ftp.queue.register(hijack, runLevel);
-                }
-            } else if (ftp.currentType === 'ascii') {
-                changeType('binary');
-            } else {
-				ftp.queue.register(hijack, runLevel);
-            }
+            ftp.queue.register(hijack, runLevel);
         }
-    } else if (ftp.currentType !== 'ascii') {
-        changeType('ascii');
+    };
+    //dot files eg .htaccess or no extension
+    if (dotIndex < 1) {
+        return ensureType();
+    }
+    ext = filepath.split('.').pop();
+    if (ftp.ascii[ext]) {
+        ensureType();
+    } else if (ftp.currentType === 'ascii') {
+        changeType('binary');
     } else {
-		ftp.queue.register(hijack, runLevel);
+        ftp.queue.register(hijack, runLevel);
     }
 };
 

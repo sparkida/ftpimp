@@ -20,6 +20,13 @@ describe('FTPimp', function () {
 		ftp = FTP.create(config, false);
 		ftp.connect(done);
 	});
+    
+    /*
+    after(() => {
+        fs.unlinkSync('./saved-ftpimp.jpg');
+        fs.unlinkSync('./saved-ind.js');
+    });
+    */
 
 	describe('Simple commands have a "raw" property string of the command', function () {
 		var com = {
@@ -248,7 +255,6 @@ describe('FTPimp', function () {
 		it ('fails', function (done) {
 			ftp.save(['missingFile', 'foo'], function (err, res) {
 				assert(err instanceof Error);
-				assert(!res);
 				done();
 			});
 		});
@@ -274,7 +280,7 @@ describe('FTPimp', function () {
 		it ('succeeds', function (done) {
 			ftp.ls('', function (err, res) {
 				assert(Array.isArray(res));
-				charFound = false;
+				let charFound = false;
 				res.forEach(function (stat) {
 					if (stat.filename === '中文') {
 						charFound = true;
