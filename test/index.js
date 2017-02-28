@@ -20,13 +20,6 @@ describe('FTPimp', function () {
 		ftp = FTP.create(config, false);
 		ftp.connect(done);
 	});
-    
-    /*
-    after(() => {
-        fs.unlinkSync('./saved-ftpimp.jpg');
-        fs.unlinkSync('./saved-ind.js');
-    });
-    */
 
 	describe('Simple commands have a "raw" property string of the command', function () {
 		var com = {
@@ -204,7 +197,7 @@ describe('FTPimp', function () {
 		it ('succeeds at getting ASCII text file', function (done) {
 			ftp.get('ind.js', function (err, res) {
 				assert.equal(ftp.currentType, 'ascii');
-				assert(typeof res === 'string');
+				assert(res instanceof Buffer);
 				done(err);
 			});
 		});
@@ -214,7 +207,7 @@ describe('FTPimp', function () {
 				if (err) {
 					done(err);
 				} else {
-					assert(typeof res === 'string');
+                    assert(res instanceof Buffer);
 					done();
 				}
 			});

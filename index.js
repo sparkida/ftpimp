@@ -310,7 +310,8 @@ var ExeQueue = function (command, callback, runLevel, holdQueue) {
             };
         that.command = command;
         that.method = method;
-        that.pipeData = '';
+        that.pipeData = [];
+        that.pipeDataSize = 0;
         that.holdQueue = holdQueue;
         that.callback = callback;
         that.runLevel = runLevel;
@@ -372,11 +373,16 @@ ExeQueue.prototype._closeTransfer = function () {
 
 ExeQueue.prototype._closePipe = function () {
     dbg('ExeQueue> closing transfer pipe'.magenta);
-    var exeQueue = this,
-        data = exeQueue.pipeData;
+    let exeQueue = this;
+    let data = exeQueue.pipeData;
+    let bufferSize = exeQueue.pipeDataSize;
     try {
         ftp.pipe.removeListener('data', exeQueue.receiveData);
         ftp.pipe.removeListener('end', exeQueue.closePipe);
+        //check for buffers
+        if (data.length && Array.isArray(data)) {
+            data = Buffer.concat(data, bufferSize);
+        }
     } catch (dataNotBoundError) {
         dbg('data not bound: ', dataNotBoundError);
     }
@@ -432,8 +438,9 @@ ExeQueue.prototype._responseHandler = function (code, data) {
 
 
 ExeQueue.prototype._receiveData = function (data) {
-    dbg('receiving...'.green);
-    this.pipeData += data;
+    let c = this;
+    c.pipeDataSize += data.length;
+    c.pipeData.push(data);
 };
 
 
@@ -757,8 +764,23 @@ Queue.registerHook = function (command, callback) {//{{{
  * Called once the socket has established
  * a connection to the host
  */
+let failedAttempts = [];
+const failedTimeThreshold = 10 * 1000;
+const maxFailedAttempts = 3;
 handle.connected = function () {//{{{
     dbg('socket connected!');
+    if (!ftp.socket.remoteAddress) {
+        let now = Date.now();
+        failedAttempts = failedAttempts.filter((time) => {
+            return time > (now - failedTimeThreshold);
+        });
+        if (failedAttempts.length > maxFailedAttempts) {
+            throw new Error('Max failed attempts reached trying to reconnect to FTP server');
+        }
+        failedAttempts.push(now);
+        setTimeout(ftp.connect, 1000);
+        return;
+    }
     process.once('exit', ftp.exit);
     process.once('SIGINT', ftp.exit);
     ftp.config.pasvAddress = ftp.socket.remoteAddress.split('.').join(',');
@@ -1490,7 +1512,6 @@ FTP.prototype.save = function (paths, callback) {//{{{
 StatObject = function (stat) {//{{{
     var that = this,
         currentDate = new Date();
-    stat = stat.match(that._reg);
     that.isDirectory = stat[1] === 'd';
     that.isSymbolicLink = stat[1] === 'l';
     that.isFile = stat[1] === '-';
@@ -1662,21 +1683,20 @@ StatObject.values = {//{{{
 };//}}}
 
 
-Queue.registerHook('LIST', function (data) {//{{{
-    var i = 0,
-        cur,
-        list = [];
+Queue.registerHook('LIST', function (data, reg = StatObject.prototype._reg) {//{{{
 	dbg('ls:hook> data: '.magenta, data);
-	if (data) {
-		data = data.split('\r\n').filter(Boolean);
-		for (i; i < data.length; i++) {
-			dbg('--------');
-			dbg(data[i]);
-			cur = StatObject.create(data[i]);
-			list.push(cur);
-			dbg(cur);
-		}
-	}
+    let list = [];
+	if (!data) {
+        return list;
+    }
+    data = data.toString().split('\r\n').filter(Boolean);
+    data.reduce((acc, stat) => {
+        stat = stat.match(reg);
+        if (stat) {
+            acc.push(StatObject.create(stat));
+        }
+        return acc;
+    }, list);
     return list;
 });//}}}
 
@@ -1733,7 +1753,7 @@ Queue.registerHook('NLST', function (data) {//{{{
     var filter = function (elem) {
             return elem.length > 0 && elem !== '.' && elem !== '..';
         };
-    data = data.split('\r\n').filter(filter);
+    data = data.toString().split('\r\n').filter(filter);
     return data;
 });//}}}
 
