@@ -1,8 +1,12 @@
 {
-    "curly": true,
     "loopfunc": true,
-    "mocha": true,
     "node": true,
+    "mocha": true,
     "undef": true,
-    "unused": "vars"
+    "unused": "vars",
+    "curly": true,
+    "laxbreak": true,
+    "esnext": true,
+    "predef": [
+    ]
 }
