@@ -1,0 +1,24 @@
+sudo: required
+dist: trusty
+language: node_js
+before_install:
+    - cp config.sample.js config.js
+    - sed -i 's/root/travis/' config.js
+    - sed -i "s/pass: ''/pass: 'travis'/" config.js
+    - sudo apt-get -qq update
+    - sudo apt-get install pure-ftpd pureadmin
+    - sudo groupadd ftpgroup
+    - sudo useradd -g ftpgroup -d /dev/null -s /etc ftpuser
+    - sudo mkdir -p /home/ftpusers/travis
+    - sudo pure-pw useradd travis -u ftpuser -d /home/ftpusers/travis
+    - sudo pure-pw mkdb
+    - sudo ln -s /etc/pure-ftpd/pureftpd.passwd /etc/pureftpd.passwd
+    - sudo ln -s /etc/pure-ftpd/pureftpd.pdb /etc/pureftpd.pdb
+    - sudo ln -s /etc/pure-ftpd/conf/PureDB /etc/pure-ftpd/auth/PureDB
+    - sudo chown -hR ftpuser:ftpgroup /home/ftpusers/
+    - sudo service pure-ftpd restart
+    - sleep 1
+node_js:
+    - '7.6.0'
+git:
+    depth: 3
