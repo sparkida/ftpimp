@@ -3,8 +3,8 @@
   "version": "3.0.0",
   "preferGlobal": false,
   "license": "MIT",
-  "homepage": "http://ftpimp.net",
-  "description": "FTP client for Windows and OSX / Linux.\nFTPimp is an (imp)roved implementation of the FTP service API for NodeJS.",
+  "homepage": "https://sparkida.github.io/ftpimp/index.html",
+  "description": "FTP client for Windows, OSX and Linux.\nFTPimp is an (imp)roved implementation of the FTP service API for NodeJS.",
   "main": "./index",
   "directories": {
     "lib": "./lib"

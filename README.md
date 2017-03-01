@@ -25,11 +25,10 @@ FTPimp has several major benefits in comparison to other Node FTP clients:
   
 
 
-
 API Documentation
 -----------------
 
-[Documentation for ftp-imp](http://ftpimp.net) can be found at the website [&not;http://ftpimp.net](http://ftpimp.net)
+[Documentation for ftp-imp](https://sparkida.github.io/ftpimp) can be found at the website [&not;https://sparkida.github.io/ftpimp](https://sparkida.github.io/ftpimp)
 
 **Tests provide an example for every (practical) endpoint in the library** [&not;see those here](https://github.com/sparkida/ftpimp/blob/master/test/index.js).
 
@@ -37,7 +36,7 @@ API Documentation
 Process flow and Queueing procedures
 ------------------------------------
 
-**By default, every call is sequential.** To have more granular control, use the [Queue.RunLevels](http://ftpimp.net/FTP.Queue.html#.RunLevels)
+**By default, every call is sequential.** To have more granular control, use the [Queue.RunLevels](https://sparkida.github.io/ftpimp/FTP.Queue.html#.RunLevels)
 
 You'll likely only need to use "Queue.RunNext" to prioritize a command over any subsequent commands. In
 the example below (**#1**), the sequence is [**mkdir**, **ls**, **put**]
@@ -57,7 +56,7 @@ ftp.ls('foo', function (err, filelist) { //runs second
 ```
 
 
-While in the next example below(#2) we use [Queue.RunNext](http://ftpimp.net/FTP.Queueu.html#.RunNext)
+While in the next example below(#2) we use [Queue.RunNext](https://sparkida.github.io/ftpimp/FTP.Queueu.html#.RunNext)
 to prioritize our "put", over that of the "ls", making our sequence [**mkdir**, **put**, **ls**]
 
 ***example #2:***
