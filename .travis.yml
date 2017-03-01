@@ -5,9 +5,7 @@ before_install:
   - cp config.sample.js config.js
   - sed -i 's/pass:.*/pass:"travis",/' config.js
   - sed -i 's/root/travis/' config.js
-  - sudo apt-get -qq update && sudo apt-get install pure-ftpd
-  - sudo sed -i 's/yes/no/' /etc/pure-ftpd/conf/NoAnonymous
-  - sudo service pure-ftpd restart
+  - docker run -d --net=host sparkida/pure-ftpd
   - sleep 1
 node_js:
     - '7.6.0'
