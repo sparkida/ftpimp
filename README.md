@@ -6,7 +6,7 @@ FTP client for Windows and OSX / Linux.
 FTPimp is an (imp)roved implementation of the FTP service API for NodeJS. It has unique features that you'd otherwise expect an FTP client to have...
 
 
-Upgrading to 3.0
+Upgrading to 3.0 (Feb 28th, 2017)
 ================
 
 Only one real breaking change for anyone using ftpimp < 3.0, **data returned is now a Buffer**. This may affect methods that try to perform special String methods on a Buffer object (ie String.prototype.split)

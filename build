@@ -1,3 +1,14 @@
 #!/usr/bin/env bash
-rm `find ./docs -type f -name '*.html' -or -name '*.textile'`;
+currentBranch="`git branch | while read line; do if [[ "$line" =~ ^\* ]]; then echo ${line:2}; fi; done`"
+if [ -d docs ]; then
+    rm -rf docs
+fi
 ./node_modules/.bin/jsdoc -c jsdoc.json
+git stash
+git checkout gh-pages
+mv -f ./docs/*.html .
+rm -rf docs
+git commit -am 'updated docs'
+git push origin gh-pages
+git checkout "$currentBranch"
+git stash pop
