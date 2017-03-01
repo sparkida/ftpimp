@@ -6,7 +6,7 @@ before_install:
     - sed -i 's/root/travis/' config.js
     - sed -i "s/pass: ''/pass: 'travis'/" config.js
     - sudo apt-get -qq update && sudo apt-get install pure-ftpd
-    - sed -i 's/yes/no/' /etc/pure-ftpd/conf/NoAnonymous
+    - sudo sed -i 's/yes/no/' /etc/pure-ftpd/conf/NoAnonymous
     - sudo service pure-ftpd restart
     - sleep 1
 node_js:
