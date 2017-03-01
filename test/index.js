@@ -197,7 +197,7 @@ describe('FTPimp', function () {
 		it ('succeeds at getting ASCII text file', function (done) {
 			ftp.get('ind.js', function (err, res) {
 				assert.equal(ftp.currentType, 'ascii');
-				assert(typeof res === 'string');
+				assert(res instanceof Buffer);
 				done(err);
 			});
 		});
@@ -207,7 +207,7 @@ describe('FTPimp', function () {
 				if (err) {
 					done(err);
 				} else {
-					assert(typeof res === 'string');
+                    assert(res instanceof Buffer);
 					done();
 				}
 			});
@@ -248,7 +248,6 @@ describe('FTPimp', function () {
 		it ('fails', function (done) {
 			ftp.save(['missingFile', 'foo'], function (err, res) {
 				assert(err instanceof Error);
-				assert(!res);
 				done();
 			});
 		});
@@ -274,7 +273,7 @@ describe('FTPimp', function () {
 		it ('succeeds', function (done) {
 			ftp.ls('', function (err, res) {
 				assert(Array.isArray(res));
-				charFound = false;
+				let charFound = false;
 				res.forEach(function (stat) {
 					if (stat.filename === '中文') {
 						charFound = true;
