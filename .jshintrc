@@ -7,6 +7,5 @@
     "curly": true,
     "laxbreak": true,
     "esnext": true,
-    "predef": [
-    ]
+    "predef": []
 }
