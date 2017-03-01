@@ -24,7 +24,7 @@ var net = require('net'),//{{{
     /** 
      * The main FTP API object
      * @constructor
-	 * @mixes EventEmitter
+     * @mixes EventEmitter
      * @param {null|object} config - The ftp connection settings (optional)
      * @param {boolean} connect - Whether or not to start the connection automatically; default is true;
      * @todo The major functions have been added and this current version
