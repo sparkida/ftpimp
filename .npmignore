@@ -1,12 +1,12 @@
-config.js
 log
 node_modules
 site
 build
-build-docs.js
 docs
+config*
 .git*
 .travis.yml
 jsdoc.json
 .jshintrc
 test
+docker
