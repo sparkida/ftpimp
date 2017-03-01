@@ -1,4 +1,3 @@
 #!/usr/bin/env bash
 rm `find ./docs -type f -name '*.html' -or -name '*.textile'`;
-node build-docs;
-
+./node_modules/.bin/jsdoc -c jsdoc.json
