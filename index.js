@@ -1421,7 +1421,7 @@ FTP.prototype.chdir.raw = 'CWD';
 FTP.prototype.unlink = function (filepath, callback, runLevel, holdQueue) {//{{{
     ftp.run(FTP.prototype.unlink.raw + ' ' + filepath, function (err, data) {
         if (!err) {
-            data = data.match(/eleted (.*)/)[1];
+            data = data.match(/(del\w+) *(.*)/i)[2];
         }
         callback.call(callback, err, data);
     }, runLevel, holdQueue);
