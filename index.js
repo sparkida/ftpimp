@@ -1683,7 +1683,8 @@ StatObject.values = {//{{{
 };//}}}
 
 
-Queue.registerHook('LIST', function (data, reg = StatObject.prototype._reg) {//{{{
+Queue.registerHook('LIST', function (data, reg) {//{{{
+    reg = reg || StatObject.prototype._reg;
 	dbg('ls:hook> data: '.magenta, data);
     let list = [];
 	if (!data) {
