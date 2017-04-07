@@ -1,3 +1,4 @@
+'use strict';
 /*
  * The FTPimp testing suite
  * (c) 2014 Nicholas Riley, Sparkida. All Rights Reserved.
