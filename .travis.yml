@@ -8,9 +8,10 @@ before_install:
   - docker run -d --net=host sparkida/pure-ftpd
   - sleep 1
 node_js:
-    - '7.6.0'
-    - '6.10.2'
-    - '5.12.0'
-    - '4.8.2'
+    - '8'
+    - '7'
+    - '6'
+    - '5'
+    - '4'
 git:
     depth: 3

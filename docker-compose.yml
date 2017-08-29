@@ -1,0 +1,14 @@
+vsftpd:
+  image: fauria/vsftpd
+  container_name: vsftpd
+  environment:
+    #your host ip, may just be 127.0.0.1
+    - PASV_ADDRESS=192.168.10.10
+  ports:
+    - 21:21
+    - 20:20
+    - 21100-21110:21100-21110
+pure-ftpd:
+  image: sparkida/pure-ftpd
+  container_name: pure-ftpd
+  net: host
