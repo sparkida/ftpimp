@@ -6,12 +6,13 @@ FTP client for Windows and OSX / Linux.
 FTPimp is an (imp)roved implementation of the FTP service API for NodeJS. It has unique features that you'd otherwise expect an FTP client to have...
 
 
-<h4>Supported Node Versions</h4>
+#### Supported Node Versions
 
 - 4.x
 - 5.x
 - 6.x
 - 7.x
+- 8.x
 
 Upgrading to 3.0 (Feb 28th, 2017)
 ================

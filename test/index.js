@@ -11,7 +11,7 @@ var assert = require('assert'),
 	config = require('../config'), // jshint ignore:line
 	path = require('path'),
 	ftp;
-config.debug = false;
+config.debug = process.argv.indexOf('--debug') > -1;
 describe('FTPimp', function () {
 	//TODO - change to main
 	before(function (done) {
@@ -54,19 +54,19 @@ describe('FTPimp', function () {
 	describe('mkdir#MKD: make a remote directory', function () {
 		it ('succeeds', function (done) {
 			ftp.mkdir(path.join(testDir, 'foo'), function (err, res) {
-				assert(res.length, 2, 'Could not add directories');
+				assert.equal(res.length, 2, 'Could not add directories');
 				done(err);
 			}, true);
 		});
 		it ('succeeds at making directory with a character', function (done) {
 			ftp.mkdir(path.join(testDir, '中文'), function (err, res) {
-				assert(res.length, 2, 'Could not add directories');
+				assert.equal(res.length, 1, 'Could not add directories');
 				done(err);
 			}, true);
 		});
 		it ('succeeds at making a directory with a space', function (done) {
 			ftp.mkdir(path.join(testDir, 'foo bar'), function (err, res) {
-				assert(res.length, 1, 'Could not add directories');
+				assert.equal(res.length, 1, 'Could not add directories');
 				done(err);
 			}, true);
 		});
