@@ -2,3 +2,4 @@ config.js
 log
 node_modules
 site
+package-lock.json
